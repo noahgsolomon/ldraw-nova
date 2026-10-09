@@ -202,9 +202,16 @@ class EngineTest(unittest.TestCase):
 
     def test_invalid_config_rejected(self):
         for update in [dict(image='nova:latest'), dict(version='main'), dict(source_url='https://user:secret@github.com/x/y'),
-                       dict(token='short'), dict(root=self.toolkit / 'private'), dict(timeout=9999)]:
+                       dict(token='short'), dict(root=self.toolkit / 'private'), dict(timeout=9999),
+                       dict(create_timeout=0), dict(create_timeout=121), dict(create_timeout=31, timeout=30)]:
             with self.subTest(update=update), self.assertRaises(ValueError):
                 dataclasses.replace(self.config, **update).validate()
+
+    def test_creation_timeout_defaults_and_supported_bounds(self):
+        self.assertEqual(self.config.create_timeout, 30)
+        for create_timeout in (1, 90, 120):
+            with self.subTest(create_timeout=create_timeout):
+                dataclasses.replace(self.config, create_timeout=create_timeout).validate()
 
 
     def test_delete_prior_release_and_expired_workspaces(self):
@@ -273,6 +280,7 @@ class DockerTest(EngineTest):
                 code, text, stage = runner.run(directory / meta['generation'], dict(kind='cli', args=['doctor']), threading.Event())
         command = calls[0][0]
         self.assertEqual(code, 0)
+        self.assertEqual(calls[0][1]['timeout'], 30)
         for required in ['--network=none', '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges',
                          '--pids-limit=128', '--memory=1g', '--memory-swap=1g', '--user', '65532:65532', '--pull=never']:
             self.assertIn(required, command)
@@ -283,6 +291,50 @@ class DockerTest(EngineTest):
         self.assertNotIn(self.config.token, str(command))
         self.assertEqual(calls[-1][0][:2], ['rm', '--force'])
         self.assertEqual((stage / 'result.mpd').read_text(), '0 model')
+
+    def test_configured_creation_timeout_keeps_total_deadline_and_cancellation(self):
+        runner = server.DockerRunner(dataclasses.replace(self.config, create_timeout=90))
+        cancelled = threading.Event()
+        calls = []
+        def fake_process(args, **kwargs):
+            calls.append((args, kwargs))
+            if args[0] == 'run':
+                self.assertEqual(kwargs['timeout'], 90)
+                self.assertNotIn('cancelled', kwargs)
+                # The total run timer can expire during creation. Its existing
+                # cancellation event must still prevent subsequent author code.
+                cancelled.set()
+                return 0, b''
+            if kwargs.get('cancelled') is not None and kwargs['cancelled'].is_set():
+                raise server.Refused('Engine command cancelled or timed out', 504)
+            self.assertEqual(args[:2], ['rm', '--force'])
+            return 0, b''
+        with mock.patch.object(server.threading, 'Timer') as timer, \
+                mock.patch.object(runner, 'process', side_effect=fake_process):
+            with self.assertRaisesRegex(server.Refused, 'timed out'):
+                runner.run(self.config.root, dict(kind='cli', args=['doctor']), cancelled)
+        timer.assert_called_once_with(120, cancelled.set)
+        timer.return_value.start.assert_called_once()
+        timer.return_value.cancel.assert_called_once()
+        self.assertFalse(any(args[0] == 'exec' for args, _ in calls))
+        self.assertEqual(calls[-1][0][:2], ['rm', '--force'])
+        self.assertFalse(runner.active)
+
+    def test_shutdown_budget_follows_creation_timeout(self):
+        for create_timeout, budget in ((30, 45), (90, 105), (120, 135)):
+            with self.subTest(create_timeout=create_timeout):
+                runner = server.DockerRunner(dataclasses.replace(self.config, create_timeout=create_timeout))
+                cancelled = threading.Event()
+                runner.running['pending-creation'] = cancelled
+                # Advancing the clock proves the deadline without sleeping for
+                # up to 135 seconds or falsely claiming that creation drained.
+                with mock.patch.object(server.time, 'monotonic', side_effect=(100, 100, 100 + budget)), \
+                        mock.patch.object(runner.drained, 'wait') as wait, \
+                        mock.patch.object(runner, 'process') as process:
+                    self.assertFalse(runner.close())
+                wait.assert_called_once_with(budget)
+                process.assert_not_called()
+                self.assertTrue(cancelled.is_set())
 
     def test_cleanup_on_execution_error(self):
         runner = server.DockerRunner(self.config)

@@ -72,9 +72,16 @@ python3 second-brick/engine/server.py
 
 Optional configuration: `NOVA_ENGINE_BIND` (default 127.0.0.1),
 `NOVA_ENGINE_PORT` (8788), `NOVA_ENGINE_TIMEOUT` (120 seconds total per command, maximum 600),
+`NOVA_ENGINE_CREATE_TIMEOUT` (30 seconds for inert container creation; 1–120 and no
+greater than the total command timeout),
 `NOVA_ENGINE_DOCKER` (absolute executable path), and
 `NOVA_ENGINE_DOCKER_SOCKET` (absolute local socket path). There is no remote Docker
 URL, image name or command executable accepted from API requests.
+
+Slow development hosts using Docker's VFS storage driver may need
+`NOVA_ENGINE_CREATE_TIMEOUT=90`. Creation still counts toward the total command
+deadline. Shutdown waits at most the creation timeout plus 15 seconds for pending
+creation and cleanup; unconfirmed cleanup keeps execution unavailable.
 
 ## API
 

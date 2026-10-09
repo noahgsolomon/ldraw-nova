@@ -232,6 +232,7 @@ class Config:
     docker: str = '/usr/local/bin/docker'
     docker_socket: str = '/var/run/docker.sock'
     timeout: int = 120
+    create_timeout: int = 30
     max_calls: int = 100
     max_workspaces: int = 16
     ttl: int = 86400
@@ -251,6 +252,8 @@ class Config:
             raise ValueError('Use an absolute private workspace directory outside the public toolkit')
         if not 1 <= self.timeout <= 600 or not 1 <= self.max_calls <= 500 or not 1 <= self.max_workspaces <= 128 or not 1 <= self.parallel <= 8 or not 60 <= self.ttl <= 604800:
             raise ValueError('Runtime quotas are outside their supported ranges')
+        if not 1 <= self.create_timeout <= min(120, self.timeout):
+            raise ValueError('NOVA_ENGINE_CREATE_TIMEOUT must be 1–120 seconds and cannot exceed NOVA_ENGINE_TIMEOUT')
         if not Path(self.docker).is_absolute() or not Path(self.docker_socket).is_absolute():
             raise ValueError('Docker executable and local socket must be absolute paths')
 
@@ -386,7 +389,7 @@ class DockerRunner:
                 '--env', 'MKL_NUM_THREADS=2', '--env', 'LP_NUM_THREADS=2',
                 '--entrypoint', '/opt/nova/.venv/bin/python', self.config.image,
                 '-I', '-c', 'import time; time.sleep(900)',
-            ], timeout=30)
+            ], timeout=self.config.create_timeout)
             creation_confirmed = True
             self.checked(['cp', str(workspace) + '/.', name + ':/job'], cancelled=cancelled)
             # cp uses root ownership by default. Fix ownership as the container's
@@ -446,7 +449,9 @@ class DockerRunner:
                 self.slots.release()
         return True
 
-    def close(self, *, timeout=45):
+    def close(self, *, timeout=None):
+        if timeout is None:
+            timeout = self.config.create_timeout + 15
         deadline = time.monotonic() + timeout
         with self.drained:
             self.closing = True
@@ -853,6 +858,7 @@ def main():
         docker=os.environ.get('NOVA_ENGINE_DOCKER', '/usr/local/bin/docker'),
         docker_socket=os.environ.get('NOVA_ENGINE_DOCKER_SOCKET', '/var/run/docker.sock'),
         timeout=int(os.environ.get('NOVA_ENGINE_TIMEOUT', '120')),
+        create_timeout=int(os.environ.get('NOVA_ENGINE_CREATE_TIMEOUT', '30')),
     )
     engine = Engine(config)
     # One orchestrator owns a store and its container labels at a time.
