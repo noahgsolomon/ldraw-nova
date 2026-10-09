@@ -79,6 +79,38 @@ restart, concurrency, sandbox flags, timeouts, shutdown admission/drain races,
 normalized archive ownership, bounded workspace volumes, private offline cache
 restoration, directory quotas, and durable recovery of uncertain Docker resource
 creation across service restarts. Python compilation
-and whitespace checks pass. These are service tests; the actual image build and
-HTTP-to-Docker smoke must be recorded separately before rollout. No paid model
-calls or production deployment were part of these checks.
+and whitespace checks pass. No paid model calls or production deployment were
+part of these checks.
+
+### Actual isolated runtime proof
+
+The clean source export at `9868c9626d82ddde6d5fc721f3d4978aaaeb70a4` built
+immutable local image
+`sha256:2d19c05ae8b78219d26a250fd3804c8e6ce3631ead33fc1645b071cd70d7edbd`.
+The service verified its matching OCI source/revision labels. This tested source
+pin remains the runtime release; subsequent documentation commits do not change
+the image's source identity.
+
+The real HTTP-to-Docker smoke passed all 13 recorded workspace calls, plus
+authentication/readiness, workspace creation/deletion and idempotency assertions.
+One author Python command completed eight native operations: `doctor`, PDF
+`spec`, offline FTS discovery, plan `build`, full-contact geometry `validate`,
+model `render`, `part-board`, and instruction `manual prepare`. Four real PNGs
+returned through HTTP matched the visually reviewed model and part-board images
+byte for byte. The complete native pipeline, including cold container creation
+and cleanup, took 68.2 seconds on this development host.
+
+The running author verified UID 65532, the 64 MiB workspace mount, denied network
+and root writes, and absence of the Docker socket and service token. Its private
+cache reused the prebuilt public index without rebuilding. A generated symlink
+was refused at export with HTTP 400; the original workspace generation survived.
+A separate sleeping author was observed writing its marker inside the running
+container before the configured timeout returned HTTP 504. That unpublished
+change was also discarded. Final checks found no matching containers, volumes,
+or durable reservation files, and the service remained healthy.
+
+This is local runtime evidence, not a production deployment, a paid provider
+evaluation, or a physically tested construction. It proves these authoring and
+containment paths; whole-model/catalog/revision admission remains the application's
+responsibility. Local smoke reports, returned PNGs and native command evidence
+were retained separately from the public source tree.
