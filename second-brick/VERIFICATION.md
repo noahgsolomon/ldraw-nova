@@ -73,9 +73,12 @@ the rollout requirements.
 
 ## Engine service checks
 
-The service's 90 standard-library tests pass, covering authentication, exact
+The service's 110 standard-library tests pass, covering authentication, exact
 source/image pins, workspace quotas, path and tar attacks, idempotency after
-restart, concurrency, sandbox flags, timeouts, shutdown admission/drain races and uncertain Docker creation cleanup. Python compilation
+restart, concurrency, sandbox flags, timeouts, shutdown admission/drain races,
+normalized archive ownership, bounded workspace volumes, private offline cache
+restoration, directory quotas, and durable recovery of uncertain Docker resource
+creation across service restarts. Python compilation
 and whitespace checks pass. These are service tests; the actual image build and
 HTTP-to-Docker smoke must be recorded separately before rollout. No paid model
 calls or production deployment were part of these checks.

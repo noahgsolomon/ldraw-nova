@@ -14,17 +14,35 @@ The Python standard-library server stores logical workspaces and starts a fresh
 Docker container for each command. It never executes author Python on the host.
 Containers have no network, credentials, Docker socket or host bind mounts. They
 use a read-only root, non-root UID 65532, dropped capabilities, no-new-privileges,
-2 CPU/1 GiB memory/128 PID limits, bounded file sizes, and a fixed immutable image. Failed container removal retains its concurrency slot, makes health unhealthy, and is retried; execution pauses until cleanup succeeds.
-`/job` is a **64 MiB tmpfs**; `/tmp` and Nova's cache are separate 128 MiB tmpfs
+2 CPU/1 GiB memory/128 PID limits, bounded file sizes, and a fixed immutable image.
+Each `/job` uses a dedicated labeled Docker local-driver **64 MiB tmpfs volume**;
+`/tmp` and Nova's cache are separate 128 MiB tmpfs
 mounts. Thus a hostile generator cannot fill the host disk through a workspace.
+Failure to remove either a container or its volume retains its concurrency slot,
+makes health unhealthy, and is retried; execution pauses until cleanup succeeds.
+Startup also reclaims both types of labeled leftovers for this service instance.
+Creation intent is fsynced in a private reservation journal before each Docker
+create request. After a restart, pending requests keep their slot and unhealthy
+status even when Docker currently lists no matching resource: a timed-out daemon
+request may still complete later. Confirmed removal of both resources durably
+clears the reservation before capacity is released.
 
-The service copies the current safe workspace into `/job`, invokes a fixed Python
+The service archives the validated workspace with UID/GID 65532, private file and
+directory modes, and no links, then uses Docker's archive-preserving copy into
+`/job`. It invokes a fixed Python
 entrypoint without a shell, then streams out the resulting files. It rejects
 symlinks, hardlinks, devices, FIFOs, duplicate paths, hidden paths, path traversal,
 files over 8 MiB, more than 2,048 files, and total file contents over 32 MiB.
 A validated new generation is published atomically; interrupted exports leave the
 old workspace intact. Command nonzero exit codes are returned to the author for
 repair; a successful command is **not** evidence that its model is buildable.
+
+The image includes an immutable public-data FTS cache seed. Before author code
+runs, the unprivileged container copies it into its own writable cache tmpfs;
+only links to the read-only official LDraw tree are preserved. The per-process
+file-size ceiling is 128 MiB so Nova can use its approximately 93 MiB search
+index. Workspace files remain limited to 8 MiB at both transfer boundaries; the
+workspace and cache tmpfs limits independently bound disk-like allocations.
 
 Per-workspace locks serialize actions. A persistent idempotency record prevents
 re-execution after retries or crashes; an interrupted request returns 409 so the
@@ -80,8 +98,18 @@ URL, image name or command executable accepted from API requests.
 
 Slow development hosts using Docker's VFS storage driver may need
 `NOVA_ENGINE_CREATE_TIMEOUT=90`. Creation still counts toward the total command
-deadline. Shutdown waits at most the creation timeout plus 15 seconds for pending
-creation and cleanup; unconfirmed cleanup keeps execution unavailable.
+deadline. Volume creation has its own 10-second bound. Shutdown waits at most
+the container creation timeout plus 35 seconds for pending creation and cleanup;
+unconfirmed cleanup keeps execution unavailable.
+
+If a pending reservation cannot be resolved automatically, keep the service
+stopped. Restart the dedicated Docker daemon so old creation requests cannot
+still complete, inspect and remove the exact container and paired volume named
+by each affected file in `NOVA_ENGINE_WORKSPACES/reservations`, then remove only
+those recovered reservation files and restart the service. Do not clear a
+pending marker solely because a Docker list command is empty. A crash between
+successful removal and its journal update can require this conservative manual
+recovery too. Preserve the journal when replacing the service process or image.
 
 ## API
 

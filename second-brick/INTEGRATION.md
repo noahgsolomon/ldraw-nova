@@ -128,27 +128,31 @@ alone does not create a customer-ready design. Consult the application's
 `docs/nova-catalog-evaluation.md` and `docs/codex-design-workshop.md` for the complete
 current command workflow.
 
-## Production admission contract to implement
+## Application admission contract
 
-The host should submit a source-bound proposal, not declare a model ready. The
-following is the required integration protocol; it is **not an implemented API**.
+The host submits a source-bound proposal, not a declaration that a model is ready.
+The separate 2nd Brick adapter implements the catalog, instruction and compiler
+checks below behind its disabled-by-default Nova flag. Attribution remains an
+authoring responsibility. These are host requirements, not additional endpoints
+in this engine service. Source implementation and local verification do not
+establish an activated production release.
 
 | Proposal evidence or trusted host input | Admission requirement |
 | --- | --- |
 | Brief, requested size and capability flags | Bind the exact request; enforce the enabled construction capabilities and physical-piece range. |
 | Plans, generator source, generated MPD and hashes | Retain reproducible inputs and every attempted result; reject stale correspondence rather than silently rebuilding a different proposal. |
-| Exact catalog snapshot and part/color bindings | Recheck policy/freshness, expand every physical leaf, and reconcile exact quantities with the compiled BOM. |
+| Trusted deployed catalog and exact part/color bindings | Resolve against the controller's catalog and job capabilities, expand every physical leaf, and reconcile exact quantities with the compiled BOM. This does not check current stock or prices. Research snapshots retain their separate freshness checks. |
 | Authored instruction sidecar | Bind useful titles/descriptions to source module occurrences and step paths, then to the flattened compiler steps; reject missing, ambiguous or stale mappings. |
 | Server-resolved revision baseline and selection | Preserve world coordinates and exact protected identities, poses and attachments. Pass the frozen scope into compilation and retain the existing protection checks. |
 | Server-resolved Rebuild inventory | Enforce exact owned element/color quantities with the existing inventory checks; catalog eligibility alone is insufficient. |
 | Connection and joint contracts | Preserve supported explicit contracts; reject constructions whose essential mechanics cannot be represented, without flattening or inventing joints. |
-| Reference/source attribution and license records | Retain copied-source headers, extraction manifests and changes; distinguish studied techniques from copied assets. |
+| Reference/source attribution and license records | The author retains copied-source headers, extraction manifests and changes in the workspace and distinguishes studied techniques from copied assets; the compiler does not perform a license review. |
 | Native diagnostics, actual renders and review evidence | Keep these as evidence; still run the complete application compiler, full-model renders and the existing acceptance/review policy. |
 
-Two existing bridge behaviors require changes before scoped production revisions:
-its compiler call has no revision scope, so it normally normalizes horizontal
-origin, and its instruction text is a placeholder. The production path must compile
-in the frozen baseline coordinate system and supply real authored instructions.
+The production adapter compiles scoped revisions in the frozen baseline
+coordinate system and requires useful authored instructions bound to the exact
+MPD hash. The older research CLI's initial import remains a draft: its usual
+horizontal normalization and placeholder instructions are not production admission.
 Source occurrence identifiers must remain traceable, but generated brick numbering
 alone is not preservation evidence; the existing application checks physical
 identity and attachment as well. A generator must not be able to replace the

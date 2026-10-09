@@ -43,6 +43,9 @@ MAX_IMAGE = 2 * MiB
 MAX_IMAGES = 4
 MAX_CACHE = 64 * MiB
 MAX_ARGS = 128
+VOLUME_CREATE_TIMEOUT = 10
+CLEANUP_TIMEOUT = 20
+RUNTIME_FILE_LIMIT = 128 * MiB
 PUBLIC_ROOTS = frozenset({
     'ATTRIBUTION.md', 'CC-BY-SA-4.0', 'LICENSE', 'README.md', 'VARIANT_REPORT.md',
     'instructions.md', 'ldraw-agent', 'pyproject.toml', 'uv.lock', 'check-model.sh',
@@ -127,11 +130,14 @@ def atomic_json(path: Path, value):
         temporary.unlink(missing_ok=True)
 
 
-def inventory(root: Path):
+def _inventory(root: Path):
     """Host workspace is never mounted: only this process can alter its files."""
-    result, total = [], 0
+    result, total, entries = [], 0, 0
     for directory, dirs, files in os.walk(root, followlinks=False):
         for name in dirs + files:
+            entries += 1
+            if entries > MAX_FILES * 2:
+                raise Refused('Workspace entry quota exceeded', 413)
             path = Path(directory) / name
             relative = path.relative_to(root).as_posix()
             path_parts(relative)
@@ -145,7 +151,12 @@ def inventory(root: Path):
                 result.append((relative, info.st_size))
                 if len(result) > MAX_FILES or total > MAX_WORKSPACE:
                     raise Refused('Workspace quota exceeded', 413)
-    return sorted(result), total
+    return sorted(result), total, entries
+
+
+def inventory(root: Path):
+    files, total, _ = _inventory(root)
+    return files, total
 
 
 def put_file(root: Path, path, data):
@@ -153,21 +164,30 @@ def put_file(root: Path, path, data):
     if len(data) > MAX_FILE:
         raise Refused('File exceeds size limit', 413)
     # No untrusted process ever writes the host store; each caller holds its lock.
+    files, size, entries = _inventory(root)
     parent = root
+    missing = []
     for part in parts[:-1]:
         parent = parent / part
-        if parent.exists() and (parent.is_symlink() or not parent.is_dir()):
+        if parent.is_symlink() or parent.exists() and not parent.is_dir():
             raise Refused('Parent is not an ordinary directory')
-        parent.mkdir(mode=0o700, exist_ok=True)
+        if not parent.exists():
+            missing.append(parent)
     target = parent / parts[-1]
     if target.is_symlink() or target.exists() and not target.is_file():
         raise Refused('Destination is not an ordinary file')
-    files, size = inventory(root)
-    previous = target.stat().st_size if target.exists() else 0
-    if size - previous + len(data) > MAX_WORKSPACE or len(files) + int(not target.exists()) > MAX_FILES:
+    exists = target.exists()
+    previous = target.stat().st_size if exists else 0
+    if entries + len(missing) + int(not exists) > MAX_FILES * 2:
+        raise Refused('Workspace entry quota exceeded', 413)
+    if size - previous + len(data) > MAX_WORKSPACE or len(files) + int(not exists) > MAX_FILES:
         raise Refused('Workspace quota exceeded', 413)
     temp = parent / f'.write-{uuid.uuid4().hex}'
+    created = []
     try:
+        for directory in missing:
+            directory.mkdir(mode=0o700)
+            created.append(directory)
         with temp.open('xb') as stream:
             stream.write(data)
             stream.flush()
@@ -175,6 +195,12 @@ def put_file(root: Path, path, data):
         os.replace(temp, target)
     finally:
         temp.unlink(missing_ok=True)
+        # A refused/failed write must not accumulate empty parent directories.
+        # On success these directories contain the published file, so rmdir
+        # leaves them intact; existing directories never enter this list.
+        for directory in reversed(created):
+            with contextlib.suppress(OSError):
+                directory.rmdir()
 
 
 def import_archive(stream, destination: Path):
@@ -219,6 +245,46 @@ def import_archive(stream, destination: Path):
                     output.write(data)
                     remaining -= len(data)
     inventory(destination)
+
+
+@contextlib.contextmanager
+def workspace_archive(root: Path):
+    """Normalize validated host files for Docker's archive-preserving copy.
+
+    The host store is private and locked by the caller. Never delegate traversal
+    or ownership decisions to docker cp, and never include links in this tar.
+    """
+    files, _ = inventory(root)
+    directories = []
+    for directory, dirs, _ in os.walk(root, followlinks=False):
+        for name in dirs:
+            relative = (Path(directory) / name).relative_to(root).as_posix()
+            fd = secure_fd(root, relative, directory=True)
+            os.close(fd)
+            directories.append(relative)
+            if len(directories) + len(files) > MAX_FILES * 2:
+                raise Refused('Workspace has too many archive entries', 413)
+    with tempfile.TemporaryFile() as stream:
+        with tarfile.open(fileobj=stream, mode='w') as archive:
+            # This root member is authored by the service, not a client path.
+            for relative in ['.', *sorted(directories)]:
+                member = tarfile.TarInfo(relative)
+                member.type = tarfile.DIRTYPE
+                member.uid = member.gid = 65532
+                member.mode = 0o700
+                archive.addfile(member)
+            for relative, size in files:
+                with os.fdopen(secure_fd(root, relative), 'rb') as source:
+                    info = os.fstat(source.fileno())
+                    if info.st_nlink != 1 or info.st_size != size:
+                        raise Refused('Workspace changed while preparing its archive')
+                    member = tarfile.TarInfo(relative)
+                    member.uid = member.gid = 65532
+                    member.mode = 0o600
+                    member.size = size
+                    archive.addfile(member, source)
+        stream.seek(0)
+        yield stream
 
 
 @dataclasses.dataclass(frozen=True)
@@ -270,10 +336,66 @@ class DockerRunner:
         self.active = set()
         self.orphans = set()
         self.uncertain_starts = set()
+        self.volumes = {}
+        self.uncertain_volumes = set()
+        self.reservation_dir = config.root / 'reservations'
+        self.reservation_dir.mkdir(mode=0o700, exist_ok=True)
+        self.reservations = {}
         self.active_lock = threading.Lock()
         self.drained = threading.Condition(self.active_lock)
         self.running = {}
         self.closing = False
+
+    def record_resource(self, name, resource, state):
+        """Fsync intent before a daemon RPC; a crash must not forget late creates."""
+        with self.active_lock:
+            record = dict(self.reservations.get(name, {
+                'version': 1, 'name': name, 'container': 'none', 'volume': 'none',
+            }))
+            record[resource] = state
+            atomic_json(self.reservation_dir / (name + '.json'), record)
+            self.reservations[name] = record
+            uncertain = self.uncertain_starts if resource == 'container' else self.uncertain_volumes
+            if state == 'pending':
+                uncertain.add(name)
+            else:
+                uncertain.discard(name)
+            if resource == 'volume':
+                if state in ('pending', 'confirmed'):
+                    self.volumes[name] = 'nova-work-' + name.removeprefix('nova-job-')
+                else:
+                    self.volumes.pop(name, None)
+
+    def recover_reservations(self):
+        # Called only after the service store lock is held. Atomic-write scratch
+        # files never precede an issued RPC and do not replace the stable marker.
+        for path in sorted(self.reservation_dir.iterdir()):
+            if path.name.startswith('.') and path.name.endswith('.tmp'):
+                continue
+            if not re.fullmatch(r'nova-job-[a-f0-9]{32}\.json', path.name):
+                raise ValueError('Unexpected file in Docker reservation journal')
+            record = json.loads(read_bytes(self.reservation_dir, path.name, 4096))
+            if (not isinstance(record, dict) or set(record) != {'version', 'name', 'container', 'volume'}
+                    or record['version'] != 1 or record['name'] != path.stem
+                    or record['container'] not in ('none', 'pending', 'confirmed', 'removed')
+                    or record['volume'] not in ('none', 'pending', 'confirmed', 'removed')):
+                raise ValueError('Invalid Docker reservation journal entry')
+            name = record['name']
+            with self.active_lock:
+                if name in self.active:
+                    continue
+                if not self.slots.acquire(blocking=False):
+                    raise ValueError('Unresolved Docker reservations exceed the configured parallel limit; recover the dedicated host first')
+                self.active.add(name)
+                self.orphans.add(name)
+                self.reservations[name] = record
+                if record['container'] == 'pending':
+                    self.uncertain_starts.add(name)
+                if record['volume'] == 'pending':
+                    self.uncertain_volumes.add(name)
+                if record['volume'] in ('pending', 'confirmed'):
+                    self.volumes[name] = 'nova-work-' + name.removeprefix('nova-job-')
+        self.reap_orphans()
 
     def preflight(self):
         info = json.loads(self.checked(['image', 'inspect', self.config.image], limit=128 * 1024))[0]
@@ -281,19 +403,27 @@ class DockerRunner:
         repository = self.config.source_url.rsplit('/', 2)[0]
         if labels.get('org.opencontainers.image.revision') != self.config.version or labels.get('org.opencontainers.image.source') != repository:
             raise ValueError('Runtime image labels must match the exact public source release')
+        self.recover_reservations()
         # Reclaim this dedicated service instance's leftovers after a host crash.
         names = self.checked(['ps', '--all', '--filter', 'label=org.secondbrick.instance=' + self.instance, '--format', '{{.Names}}']).decode().splitlines()
         for name in names:
-            if re.fullmatch(r'nova-job-[a-f0-9]{32}', name):
+            if re.fullmatch(r'nova-job-[a-f0-9]{32}', name) and name not in self.active:
                 self.checked(['rm', '--force', name])
+        volumes = self.checked(['volume', 'ls', '--filter', 'label=org.secondbrick.instance=' + self.instance,
+                                '--filter', 'label=org.secondbrick.engine=isolated-workspace', '--format', '{{.Name}}']).decode().splitlines()
+        for volume in volumes:
+            if re.fullmatch(r'nova-work-[a-f0-9]{32}', volume) and volume not in self.volumes.values():
+                self.checked(['volume', 'rm', volume])
 
     def command(self, args):
         return [self.config.docker, '--host', 'unix://' + self.config.docker_socket, '--config', str(self.config_dir), *args]
 
-    def process(self, args, *, limit=MAX_OUTPUT, timeout=30, cancelled=None):
+    def process(self, args, *, limit=MAX_OUTPUT, timeout=30, cancelled=None, stdin=None):
         if cancelled is not None and cancelled.is_set():
             raise Refused('Engine command cancelled or timed out', 504)
-        process = subprocess.Popen(self.command(args), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+        if stdin is not None and not stat.S_ISREG(os.fstat(stdin.fileno()).st_mode):
+            raise Refused('Container input must be a prepared ordinary file')
+        process = subprocess.Popen(self.command(args), stdin=stdin if stdin is not None else subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, env=self.environment, start_new_session=True)
         output = bytearray()
         deadline = time.monotonic() + timeout
@@ -359,12 +489,24 @@ class DockerRunner:
             self.running[name] = cancelled
         timer = threading.Timer(self.config.timeout, cancelled.set)
         timer.daemon = True
-        creation_attempted = creation_confirmed = False
         try:
             timer.start()
             if cancelled.is_set():
                 raise Refused('Engine command cancelled or timed out', 504)
-            creation_attempted = True
+            volume = 'nova-work-' + name.removeprefix('nova-job-')
+            self.record_resource(name, 'volume', 'pending')
+            # Docker's local tmpfs driver supports archive copy with a read-only
+            # container root. It is a bounded memory volume, never a host bind.
+            self.checked(['volume', 'create', '--driver', 'local',
+                          '--label', 'org.secondbrick.engine=isolated-workspace',
+                          '--label', 'org.secondbrick.instance=' + self.instance,
+                          '--opt', 'type=tmpfs', '--opt', 'device=tmpfs',
+                          '--opt', 'o=size=64m,nosuid,nodev,noexec,mode=0700,uid=65532,gid=65532', volume],
+                         timeout=VOLUME_CREATE_TIMEOUT)
+            self.record_resource(name, 'volume', 'confirmed')
+            if cancelled.is_set():
+                raise Refused('Engine command cancelled or timed out', 504)
+            self.record_resource(name, 'container', 'pending')
             # This control phase starts only an inert PID 1. Let its bounded
             # Docker request finish even if the caller cancels; killing the CLI
             # does not guarantee cancellation of daemon-side creation. Author
@@ -375,11 +517,11 @@ class DockerRunner:
                 '--label', 'org.secondbrick.instance=' + self.instance, '--network=none', '--read-only',
                 '--cap-drop=ALL', '--security-opt=no-new-privileges', '--user', '65532:65532',
                 '--pids-limit=128', '--memory=1g', '--memory-swap=1g', '--cpus=2',
-                '--ulimit', 'nofile=256:256', '--ulimit', f'fsize={MAX_FILE}:{MAX_FILE}',
+                '--ulimit', 'nofile=256:256', '--ulimit', f'fsize={RUNTIME_FILE_LIMIT}:{RUNTIME_FILE_LIMIT}',
                 '--ulimit', 'core=0:0', '--log-driver=none',
-                '--tmpfs', '/job:rw,nosuid,nodev,noexec,size=64m,mode=1777',
+                '--mount', f'type=volume,source={volume},target=/job,volume-nocopy',
                 '--tmpfs', '/tmp:rw,nosuid,nodev,noexec,size=128m,mode=1777',
-                '--tmpfs', '/opt/nova/.cache:rw,nosuid,nodev,noexec,size=128m,mode=1777',
+                '--tmpfs', '/opt/nova/.cache:rw,nosuid,nodev,noexec,size=128m,mode=0700,uid=65532,gid=65532',
                 '--workdir', '/job', '--env', 'HOME=/tmp', '--env', 'TMPDIR=/tmp',
                 '--env', 'PYTHONPATH=/opt/nova', '--env', 'PYTHONDONTWRITEBYTECODE=1',
                 '--env', 'PYTHONNOUSERSITE=1', '--env', 'LDRAW_DIR=/opt/ldraw',
@@ -390,11 +532,16 @@ class DockerRunner:
                 '--entrypoint', '/opt/nova/.venv/bin/python', self.config.image,
                 '-I', '-c', 'import time; time.sleep(900)',
             ], timeout=self.config.create_timeout)
-            creation_confirmed = True
-            self.checked(['cp', str(workspace) + '/.', name + ':/job'], cancelled=cancelled)
-            # cp uses root ownership by default. Fix ownership as the container's
-            # root, without capabilities or any host mount, before author code.
-            self.checked(['exec', '--user', '0:0', name, '/bin/chmod', '-R', 'a+rwX', '/job'], cancelled=cancelled)
+            self.record_resource(name, 'container', 'confirmed')
+            if cancelled.is_set():
+                raise Refused('Engine command cancelled or timed out', 504)
+            with workspace_archive(workspace) as staged_input:
+                self.checked(['cp', '--archive', '-', name + ':/job'], stdin=staged_input, cancelled=cancelled)
+            # The image contains a prebuilt public-data index. Give each command
+            # its own writable copy, owned by the unprivileged execution UID.
+            self.checked(['exec', name, '/opt/nova/.venv/bin/python', '-I', '-c',
+                          "import shutil; shutil.copytree('/opt/nova-cache-seed', '/opt/nova/.cache', symlinks=True, dirs_exist_ok=True)"],
+                         cancelled=cancelled)
             if body['kind'] == 'cli':
                 command = ['/opt/nova/.venv/bin/python', '-m', 'ldraw_tools.cli', *body['args']]
             else:
@@ -413,9 +560,6 @@ class DockerRunner:
                 raise
         finally:
             timer.cancel()
-            if creation_attempted and not creation_confirmed:
-                with self.active_lock:
-                    self.uncertain_starts.add(name)
             # Failed cleanup keeps the slot reserved. Never admit more author
             # processes while an unaccounted container might still be alive.
             try:
@@ -425,18 +569,53 @@ class DockerRunner:
                     self.running.pop(name, None)
                     self.drained.notify_all()
 
-    def remove(self, name, *, timeout=10):
+    def remove(self, name, *, timeout=CLEANUP_TIMEOUT):
+        deadline = time.monotonic() + timeout
         try:
-            code, output = self.process(['rm', '--force', name], limit=4096, timeout=timeout)
-            if code and b'No such container' not in output:
-                raise RuntimeError('Container removal failed')
             with self.active_lock:
-                if code and name in self.uncertain_starts:
-                    # A timed-out create request can still complete in Docker.
-                    # Keep reclaiming the name, and keep capacity reserved,
-                    # until an actual container removal confirms reclamation.
-                    self.orphans.add(name)
-                    return False
+                record = self.reservations.get(name)
+            if record is None or record['container'] in ('pending', 'confirmed'):
+                code, output = self.process(['rm', '--force', name], limit=4096, timeout=min(10, timeout))
+                if code and b'No such container' not in output:
+                    raise RuntimeError('Container removal failed')
+                with self.active_lock:
+                    if code and name in self.uncertain_starts:
+                        # This RPC may still be creating in Docker, including
+                        # after a service restart. Absence is not reclamation.
+                        self.orphans.add(name)
+                        return False
+                if record is not None:
+                    self.record_resource(name, 'container', 'removed')
+                else:
+                    with self.active_lock:
+                        self.uncertain_starts.discard(name)
+            with self.active_lock:
+                volume = self.volumes.get(name)
+            # Never remove the volume until the container is confirmed gone:
+            # an unresolved late create may still mount that volume.
+            if volume is not None:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise RuntimeError('Workspace volume cleanup timed out')
+                code, output = self.process(['volume', 'rm', volume], limit=4096, timeout=min(10, remaining))
+                if code and b'no such volume' not in output.lower():
+                    raise RuntimeError('Workspace volume removal failed')
+                with self.active_lock:
+                    if code and name in self.uncertain_volumes:
+                        self.orphans.add(name)
+                        return False
+                if record is not None:
+                    self.record_resource(name, 'volume', 'removed')
+            # Resource deletion and journal deletion must be durable before
+            # releasing a slot. A crash at an ambiguous point fails closed.
+            with self.active_lock:
+                (self.reservation_dir / (name + '.json')).unlink(missing_ok=True)
+                fd = os.open(self.reservation_dir, os.O_DIRECTORY)
+                try:
+                    os.fsync(fd)
+                finally:
+                    os.close(fd)
+                self.reservations.pop(name, None)
         except Exception:
             with self.active_lock:
                 self.orphans.add(name)
@@ -444,6 +623,8 @@ class DockerRunner:
         with self.active_lock:
             self.orphans.discard(name)
             self.uncertain_starts.discard(name)
+            self.uncertain_volumes.discard(name)
+            self.volumes.pop(name, None)
             if name in self.active:
                 self.active.remove(name)
                 self.slots.release()
@@ -451,7 +632,7 @@ class DockerRunner:
 
     def close(self, *, timeout=None):
         if timeout is None:
-            timeout = self.config.create_timeout + 15
+            timeout = VOLUME_CREATE_TIMEOUT + self.config.create_timeout + CLEANUP_TIMEOUT + 5
         deadline = time.monotonic() + timeout
         with self.drained:
             self.closing = True
@@ -470,7 +651,7 @@ class DockerRunner:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 return False
-            self.remove(name, timeout=min(10, remaining))
+            self.remove(name, timeout=min(CLEANUP_TIMEOUT, remaining))
         with self.active_lock:
             return not self.active
 
