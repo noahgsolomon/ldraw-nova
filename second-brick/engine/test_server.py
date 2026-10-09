@@ -239,6 +239,133 @@ class EngineTest(unittest.TestCase):
         self.assertEqual(self.call(idempotencyKey='readlarge', action='read', path='large.mpd')['text'], model)
 
 
+class ReadContractTest(unittest.TestCase):
+    setUp = EngineTest.setUp
+    tearDown = EngineTest.tearDown
+    call = EngineTest.call
+
+    def generated_file(self, path, content):
+        with self.engine.locked(self.id) as (directory, meta):
+            server.put_file(directory / meta['generation'], path, content)
+
+    def test_generated_mpd_over_one_mib_is_read_completely_over_http(self):
+        mpd = ('0 Generated model with authored steps\r\n' * 60000).encode()
+        self.assertGreater(len(mpd), server.MiB)
+        self.generated_file('large.mpd', mpd)
+        http_server = server.Server(('127.0.0.1', 0), self.engine)
+        thread = threading.Thread(target=http_server.serve_forever, daemon=True)
+        thread.start()
+        client = http.client.HTTPConnection(*http_server.server_address, timeout=30)
+        try:
+            client.request('POST', '/v1/workspaces/' + self.id + '/calls',
+                           json.dumps({'idempotencyKey': 'complete-mpd', 'action': 'read', 'path': 'large.mpd'}),
+                           {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + self.config.token})
+            response = client.getresponse()
+            result = json.loads(response.read())
+            self.assertEqual(response.status, 200, result)
+            self.assertEqual(result['text'].encode(), mpd)
+        finally:
+            client.close()
+            http_server.shutdown()
+            http_server.server_close()
+            thread.join()
+
+    def test_exact_five_mib_escaped_read_with_max_images_and_idempotent_cache(self):
+        text = '\x00' * (5 * server.MiB)
+        self.generated_file('complete.txt', text.encode())
+        self.generated_file('preview.png', PNG + b'x' * (server.MAX_IMAGE - len(PNG)))
+        body = dict(action='read', path='complete.txt', imagePaths=['preview.png'] * server.MAX_IMAGES)
+        result = self.call(**body)
+        self.assertEqual(result['text'], text)
+        self.assertEqual(len(result['images']), server.MAX_IMAGES)
+        encoded = len(server.canonical(result))
+        self.assertGreater(encoded, 40 * server.MiB)
+        self.assertLessEqual(encoded, server.MAX_READ_RESPONSE)
+        self.generated_file('complete.txt', b'changed after the original read')
+        self.assertEqual(self.call(**body), result)
+        cache = self.engine.workspaces / self.id / 'calls'
+        self.assertLessEqual(sum(path.stat().st_size for path in cache.iterdir()), server.MAX_CACHE)
+        self.assertEqual(self.call(idempotencyKey='small-read', action='read', path='complete.txt')['text'], 'changed after the original read')
+        self.generated_file('another-full.txt', text.encode())
+        with self.assertRaisesRegex(server.Refused, 'cache quota'):
+            self.call(idempotencyKey='another-read', action='read', path='another-full.txt')
+
+    def test_worst_escaped_mpd_then_small_instructions_over_http(self):
+        mpd = '0 ' + '\x00' * (5 * server.MiB - 2)
+        instructions = json.dumps({'steps': [{'step': 1, 'title': 'Build the model', 'description': 'Use the authored parts.'}]})
+        self.generated_file('complete.mpd', mpd.encode())
+        self.generated_file('instructions.json', instructions.encode())
+        http_server = server.Server(('127.0.0.1', 0), self.engine)
+        thread = threading.Thread(target=http_server.serve_forever, daemon=True)
+        thread.start()
+        client = http.client.HTTPConnection(*http_server.server_address, timeout=30)
+        try:
+            for index, (path, expected) in enumerate([('complete.mpd', mpd), ('instructions.json', instructions)]):
+                client.request('POST', '/v1/workspaces/' + self.id + '/calls',
+                               json.dumps({'idempotencyKey': 'read-' + str(index), 'action': 'read', 'path': path}),
+                               {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + self.config.token})
+                response = client.getresponse()
+                result = json.loads(response.read())
+                self.assertEqual(response.status, 200, result)
+                self.assertEqual(result['text'], expected)
+        finally:
+            client.close()
+            http_server.shutdown()
+            http_server.server_close()
+            thread.join()
+        cache = self.engine.workspaces / self.id / 'calls'
+        self.assertLessEqual(sum(path.stat().st_size for path in cache.iterdir()), server.MAX_CACHE)
+
+    def test_read_limit_counts_utf8_bytes_and_refuses_one_byte_over(self):
+        exact = '🐡' * (5 * server.MiB // 4)
+        self.generated_file('unicode.txt', exact.encode())
+        self.assertEqual(self.call(action='read', path='unicode.txt')['text'], exact)
+        self.generated_file('oversized.txt', exact.encode() + b'x')
+        with self.assertRaises(server.Refused) as refused:
+            self.call(idempotencyKey='too-large', action='read', path='oversized.txt')
+        self.assertEqual(refused.exception.status, 413)
+
+    def test_read_preparation_failure_remains_idempotent_after_file_is_repaired(self):
+        self.generated_file('invalid.txt', b'\xff')
+        with self.assertRaisesRegex(server.Refused, 'not UTF-8'):
+            self.call(action='read', path='invalid.txt')
+        self.generated_file('invalid.txt', b'repaired')
+        with self.assertRaisesRegex(server.Refused, 'not UTF-8'):
+            self.call(action='read', path='invalid.txt')
+        with self.engine.locked(self.id) as (_, meta):
+            self.assertEqual(meta['calls'], 1)
+
+    def test_write_remains_one_mib_and_refusal_does_not_create_file(self):
+        with self.assertRaises(server.Refused) as refused:
+            self.call(action='write', path='too-large.txt', text='x' * (server.MiB + 1))
+        self.assertEqual(refused.exception.status, 413)
+        with self.engine.locked(self.id) as (directory, meta):
+            self.assertFalse((directory / meta['generation'] / 'too-large.txt').exists())
+
+    def test_run_and_list_keep_their_separate_text_limit(self):
+        self.generated_file('a-long-listed-name.txt', b'')
+        with mock.patch.object(server, 'MAX_TEXT', 8):
+            for action in ('run', 'list'):
+                with self.subTest(action=action), self.assertRaisesRegex(server.Refused, 'Response text'):
+                    self.call(idempotencyKey=action, action=action, kind='cli', args=['doctor'])
+
+    def test_encoded_non_read_limit_rejects_before_publishing_generation(self):
+        with self.engine.locked(self.id) as (_, meta):
+            original = meta['generation']
+        with mock.patch.object(server, 'MAX_RESPONSE', 32):
+            with self.assertRaisesRegex(server.Refused, 'Encoded response'):
+                self.call(action='run', kind='cli', args=['doctor'], imagePaths=['preview.png'])
+        with self.engine.locked(self.id) as (directory, meta):
+            self.assertEqual(meta['generation'], original)
+            self.assertFalse((directory / original / 'model.mpd').exists())
+
+    def test_image_read_limit_is_unchanged(self):
+        self.generated_file('too-large.png', PNG + b'x' * server.MAX_IMAGE)
+        with self.assertRaises(server.Refused) as refused:
+            self.call(action='read', path='too-large.png')
+        self.assertEqual(refused.exception.status, 413)
+
+
 class ArchiveTest(unittest.TestCase):
     def test_input_archive_normalizes_ownership_modes_and_preserves_empty_directories(self):
         with tempfile.TemporaryDirectory() as directory:

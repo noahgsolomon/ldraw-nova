@@ -123,7 +123,15 @@ Workspace requests require `Authorization: Bearer <NOVA_ENGINE_TOKEN>`.
   `{id,engineVersion,sourceUrl,license,image}`.
 - `DELETE /v1/workspaces/:id`: deletes source, generated files and call cache.
 - `POST /v1/workspaces/:id/calls`: returns `{text,images?:string[]}`. Images are
-  PNG/JPEG data URLs, at most four, each at most 2 MiB. Text is bounded to 1 MiB; command stdout/stderr is bounded to 64 KiB.
+  PNG/JPEG data URLs, at most four, each at most 2 MiB. A complete UTF-8 `read`
+  result may contain up to 5 MiB; writes and other result text remain limited to
+  1 MiB. Command stdout/stderr is bounded to 64 KiB. Encoded JSON responses have
+  a separate 16 MiB limit, except reads allow worst-case sixfold text escaping
+  plus the existing image allowance and 4 KiB overhead (about 40.67 MiB).
+  The independent 64 MiB response cache reserves actual encoded space for
+  non-mutating reads and the full allowed response before commands or writes.
+  A large model read can therefore be followed by its small instruction file;
+  oversized reads are refused, never truncated.
   An error returns `{error}` with an appropriate HTTP status.
 
 Every call includes a unique `idempotencyKey` (1–96 ASCII letters, digits,
