@@ -13,10 +13,11 @@ from pathlib import Path
 
 import numpy as np
 
-from ldraw import Model, Parts, Piece, parse_model_result
+from ldraw import Model, Piece, parse_model_result
 from ldraw.part import Part
 
 from .common import CACHE, atomic_write, normalized
+from .portable_geometry import PortableParts
 
 
 def is_part(model):
@@ -72,7 +73,7 @@ def assembly_view(model, section=None, colour=None):
     return view
 
 
-class DocumentParts(Parts):
+class DocumentParts(PortableParts):
     """Per-document overlay; original library and other documents remain untouched."""
 
     def __init__(self, base, model):

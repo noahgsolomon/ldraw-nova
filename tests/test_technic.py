@@ -164,3 +164,45 @@ def test_structural_discovery_uses_selected_content_not_parent_theme():
     assert not structural_candidate(dict(row, description='Motor and gearbox'))
     assert structural_candidate({'kind': 'parts', 'part': '2780.dat'})
     assert not structural_candidate({'kind': 'parts', 'part': '3648.dat'})
+
+
+def test_changed_geometry_with_same_bounds_cannot_reuse_reviewed_ports(official):
+    from dataclasses import replace
+
+    geometry = official.geometry('2780')
+    point = geometry.points[0]
+    changed = replace(geometry, points=(Vector(point.x + .001, point.y, point.z), *geometry.points[1:]))
+    assert changed.bounds == geometry.bounds
+    assert definition(geometry)
+    assert definition(changed) is None
+
+
+def test_incomplete_geometry_cannot_reuse_matching_point_fingerprint(official):
+    from dataclasses import replace
+    from ldraw.diagnostics import Diagnostic, DiagnosticCode, Severity
+
+    geometry = official.geometry('2780')
+    incomplete = replace(geometry, diagnostics=(Diagnostic(
+        line_number=None, message='Unresolved geometry child', severity=Severity.WARNING,
+        code=DiagnosticCode.PART_REFERENCE_UNRESOLVED),))
+    assert incomplete.points == geometry.points
+    assert not incomplete.complete
+    assert definition(incomplete) is None
+
+
+def test_unknown_technic_coverage_cannot_pass_even_without_rigid_contract(official):
+    from dataclasses import replace
+    from ldraw_tools.technic_review import review_inspection
+
+    inspection = inspect_connections(model(('32523', (0, 0, 0), I)), official)
+    original = review_inspection(inspection)
+    assert original['checks_passed'] and original['coverage']['complete']
+    item = inspection.occurrences[0]
+    unknown = replace(item, local=replace(item.local, points=(*item.local.points, Vector(100, 0, 0))),
+                      connections=())
+    report = review_inspection(replace(inspection, occurrences=(unknown,)))
+    assert report['complete']  # Source resolution is complete; reviewed coverage is not.
+    assert not report['checks_passed'] and not report['coverage']['complete']
+    assert report['coverage']['unknown_technic'] == [0]
+    assert any(d['code'] == 'technic.unreviewed_parts' and d['severity'] == 'warning'
+               for d in report['diagnostics'])

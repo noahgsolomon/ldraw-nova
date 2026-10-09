@@ -8,7 +8,9 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import numpy as np
-from ldraw import Parts, Vector, Matrix
+from ldraw import Vector, Matrix
+
+from .portable_geometry import PortableParts
 
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCE_DATA = ROOT / "data"
@@ -124,7 +126,7 @@ def get_parts(root=None, *, refresh=False, shadows=None):
             rows.append(f"{p.name} {title}")
         atomic_write(index, "\n".join(rows) + "\n")
         atomic_write(stamp, signature)
-    parts = Parts(index)
+    parts = PortableParts(index)
     for source in shadow_paths(shadows):
         parts.add_connection_shadow(source)
     return parts
