@@ -73,7 +73,7 @@ the rollout requirements.
 
 ## Engine service checks
 
-The service's 78 standard-library tests pass, covering authentication, exact
+The service's 79 standard-library tests pass, covering authentication, exact
 source/image pins, workspace quotas, path and tar attacks, idempotency after
 restart, concurrency, sandbox flags, timeouts and cleanup. Python compilation
 and whitespace checks pass. These are service tests; the actual image build and
