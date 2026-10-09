@@ -266,7 +266,11 @@ class DockerRunner:
         self.instance = hashlib.sha256(str(config.root).encode()).hexdigest()[:16]
         self.active = set()
         self.orphans = set()
+        self.uncertain_starts = set()
         self.active_lock = threading.Lock()
+        self.drained = threading.Condition(self.active_lock)
+        self.running = {}
+        self.closing = False
 
     def preflight(self):
         info = json.loads(self.checked(['image', 'inspect', self.config.image], limit=128 * 1024))[0]
@@ -284,6 +288,8 @@ class DockerRunner:
         return [self.config.docker, '--host', 'unix://' + self.config.docker_socket, '--config', str(self.config_dir), *args]
 
     def process(self, args, *, limit=MAX_OUTPUT, timeout=30, cancelled=None):
+        if cancelled is not None and cancelled.is_set():
+            raise Refused('Engine command cancelled or timed out', 504)
         process = subprocess.Popen(self.command(args), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, env=self.environment, start_new_session=True)
         output = bytearray()
@@ -327,9 +333,12 @@ class DockerRunner:
 
     def healthy(self):
         with self.active_lock:
-            return not self.orphans
+            return not self.closing and not self.orphans
 
     def run(self, workspace: Path, body, cancelled):
+        with self.active_lock:
+            if self.closing:
+                raise Refused('Engine is shutting down', 503)
         self.reap_orphans()
         if not self.healthy():
             raise Refused('Container cleanup is unavailable; new execution is paused', 503)
@@ -337,11 +346,26 @@ class DockerRunner:
             raise Refused('Engine is at its parallel command limit', 429)
         name = 'nova-job-' + uuid.uuid4().hex
         with self.active_lock:
+            # close() may have started while this request waited for capacity.
+            # Register creation and its cancellation under the same lock, before
+            # any Docker command can begin.
+            if self.closing:
+                self.slots.release()
+                raise Refused('Engine is shutting down', 503)
             self.active.add(name)
+            self.running[name] = cancelled
         timer = threading.Timer(self.config.timeout, cancelled.set)
         timer.daemon = True
-        timer.start()
+        creation_attempted = creation_confirmed = False
         try:
+            timer.start()
+            if cancelled.is_set():
+                raise Refused('Engine command cancelled or timed out', 504)
+            creation_attempted = True
+            # This control phase starts only an inert PID 1. Let its bounded
+            # Docker request finish even if the caller cancels; killing the CLI
+            # does not guarantee cancellation of daemon-side creation. Author
+            # execution below still observes cancellation before it can start.
             self.checked([
                 'run', '--detach', '--rm', '--pull=never', '--name', name,
                 '--label', 'org.secondbrick.engine=isolated-job',
@@ -362,7 +386,8 @@ class DockerRunner:
                 '--env', 'MKL_NUM_THREADS=2', '--env', 'LP_NUM_THREADS=2',
                 '--entrypoint', '/opt/nova/.venv/bin/python', self.config.image,
                 '-I', '-c', 'import time; time.sleep(900)',
-            ], cancelled=cancelled)
+            ], timeout=30)
+            creation_confirmed = True
             self.checked(['cp', str(workspace) + '/.', name + ':/job'], cancelled=cancelled)
             # cp uses root ownership by default. Fix ownership as the container's
             # root, without capabilities or any host mount, before author code.
@@ -385,31 +410,64 @@ class DockerRunner:
                 raise
         finally:
             timer.cancel()
+            if creation_attempted and not creation_confirmed:
+                with self.active_lock:
+                    self.uncertain_starts.add(name)
             # Failed cleanup keeps the slot reserved. Never admit more author
             # processes while an unaccounted container might still be alive.
-            self.remove(name)
+            try:
+                self.remove(name)
+            finally:
+                with self.drained:
+                    self.running.pop(name, None)
+                    self.drained.notify_all()
 
-    def remove(self, name):
+    def remove(self, name, *, timeout=10):
         try:
-            code, output = self.process(['rm', '--force', name], limit=4096, timeout=10)
+            code, output = self.process(['rm', '--force', name], limit=4096, timeout=timeout)
             if code and b'No such container' not in output:
                 raise RuntimeError('Container removal failed')
+            with self.active_lock:
+                if code and name in self.uncertain_starts:
+                    # A timed-out create request can still complete in Docker.
+                    # Keep reclaiming the name, and keep capacity reserved,
+                    # until an actual container removal confirms reclamation.
+                    self.orphans.add(name)
+                    return False
         except Exception:
             with self.active_lock:
                 self.orphans.add(name)
             return False
         with self.active_lock:
             self.orphans.discard(name)
+            self.uncertain_starts.discard(name)
             if name in self.active:
                 self.active.remove(name)
                 self.slots.release()
         return True
 
-    def close(self):
-        with self.active_lock:
+    def close(self, *, timeout=45):
+        deadline = time.monotonic() + timeout
+        with self.drained:
+            self.closing = True
+            for cancelled in self.running.values():
+                cancelled.set()
+            # Let each run cancel its Docker client, finish any pending creation,
+            # then remove its own container in finally. Removing a name before
+            # creation has returned can falsely report "No such container".
+            while self.running:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return False
+                self.drained.wait(remaining)
             names = list(self.active)
         for name in names:
-            self.remove(name)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return False
+            self.remove(name, timeout=min(10, remaining))
+        with self.active_lock:
+            return not self.active
 
 
 class Engine:
@@ -818,10 +876,12 @@ def main():
         server.serve_forever(poll_interval=0.2)
     finally:
         maintenance_stop.set()
+        cleaned = engine.runner.close()
         maintenance.join(timeout=15)
-        engine.runner.close()
         server.server_close()
         os.close(service_lock)
+        if not cleaned:
+            raise RuntimeError('Engine shutdown could not confirm container cleanup; recover the dedicated Docker host before restarting author execution')
 
 
 if __name__ == '__main__':

@@ -343,6 +343,132 @@ class DockerTest(EngineTest):
         export = next(i for i, args in enumerate(calls) if args[0] == 'cp' and args[-1] == '-')
         self.assertLess(pause, export)
 
+    def test_closed_runner_refuses_new_commands_without_touching_docker(self):
+        runner = server.DockerRunner(self.config)
+        self.assertTrue(runner.close())
+        self.assertFalse(runner.healthy())
+        with mock.patch.object(runner, 'process') as process:
+            with self.assertRaisesRegex(server.Refused, 'shutting down'):
+                runner.run(self.config.root, dict(kind='cli', args=['doctor']), threading.Event())
+            process.assert_not_called()
+
+    def test_queued_request_cannot_start_after_shutdown_releases_capacity(self):
+        runner = server.DockerRunner(dataclasses.replace(self.config, parallel=1))
+        runner.slots.acquire()  # Capacity is occupied before the request arrives.
+        waiting = threading.Event()
+        acquire = runner.slots.acquire
+        def wait_for_capacity(*args, **kwargs):
+            waiting.set()
+            return acquire(*args, **kwargs)
+        def queued():
+            with self.assertRaisesRegex(server.Refused, 'shutting down'):
+                runner.run(self.config.root, dict(kind='cli', args=['doctor']), threading.Event())
+        with mock.patch.object(runner.slots, 'acquire', side_effect=wait_for_capacity), \
+                mock.patch.object(runner, 'process') as process, ThreadPoolExecutor(max_workers=1) as pool:
+            request = pool.submit(queued)
+            try:
+                self.assertTrue(waiting.wait(1))
+                self.assertTrue(runner.close())
+            finally:
+                runner.slots.release()
+            request.result(timeout=2)
+            process.assert_not_called()
+        self.assertFalse(runner.active)
+        self.assertFalse(runner.running)
+
+    def test_shutdown_waits_for_creation_then_removes_before_returning(self):
+        runner = server.DockerRunner(self.config)
+        entered, release, cancelled = threading.Event(), threading.Event(), threading.Event()
+        events = []
+        def fake(args, **kwargs):
+            if args[0] == 'run':
+                self.assertNotIn('cancelled', kwargs, 'Do not abandon daemon-side creation on client cancellation.')
+                entered.set()
+                if not release.wait(2):
+                    raise RuntimeError('Test creation gate timed out')
+                events.append('created')
+                return 0, b''
+            if args[0] == 'rm':
+                events.append('removed')
+                return 0, b''
+            if kwargs.get('cancelled') is not None and kwargs['cancelled'].is_set():
+                raise server.Refused('Engine command cancelled or timed out', 504)
+            self.fail('Author execution must not start after shutdown')
+        def command():
+            with self.assertRaisesRegex(server.Refused, 'cancelled'):
+                runner.run(self.config.root, dict(kind='cli', args=['doctor']), cancelled)
+        with mock.patch.object(runner, 'process', side_effect=fake), ThreadPoolExecutor(max_workers=2) as pool:
+            running = pool.submit(command)
+            try:
+                self.assertTrue(entered.wait(1))
+                closing = pool.submit(runner.close)
+                self.assertTrue(cancelled.wait(1))
+                self.assertFalse(closing.done())
+                self.assertEqual(events, [], 'No early rm while Docker has not confirmed creation.')
+            finally:
+                release.set()
+            running.result(timeout=2)
+            self.assertTrue(closing.result(timeout=2))
+        self.assertEqual(events, ['created', 'removed'])
+        self.assertFalse(runner.active)
+        self.assertFalse(runner.running)
+
+    def test_shutdown_timeout_is_bounded_and_does_not_claim_cleanup(self):
+        runner = server.DockerRunner(self.config)
+        cancelled = threading.Event()
+        name = 'nova-job-' + 'c' * 32
+        runner.slots.acquire()
+        runner.active.add(name)
+        runner.running[name] = cancelled
+        with mock.patch.object(runner, 'process') as process:
+            started = time.monotonic()
+            self.assertFalse(runner.close(timeout=0.02))
+            self.assertLess(time.monotonic() - started, 0.5)
+            self.assertTrue(cancelled.is_set())
+            self.assertFalse(runner.healthy())
+            process.assert_not_called()  # An unresolved creator owns its cleanup.
+        with runner.drained:
+            runner.running.clear()
+            runner.drained.notify_all()
+        with mock.patch.object(runner, 'process', return_value=(0, b'')):
+            self.assertTrue(runner.close())
+
+    def test_uncertain_creation_keeps_capacity_until_late_container_is_removed(self):
+        runner = server.DockerRunner(dataclasses.replace(self.config, parallel=1))
+        def interrupted_create(args, **kwargs):
+            if args[0] == 'run':
+                raise server.Refused('Docker creation timed out', 504)
+            self.assertEqual(args[:2], ['rm', '--force'])
+            return 1, b'No such container'
+        with mock.patch.object(runner, 'process', side_effect=interrupted_create):
+            with self.assertRaisesRegex(server.Refused, 'creation timed out'):
+                runner.run(self.config.root, dict(kind='cli', args=['doctor']), threading.Event())
+            runner.reap_orphans()
+        self.assertFalse(runner.healthy())
+        self.assertEqual(len(runner.active), 1)
+        self.assertEqual(runner.active, runner.orphans)
+        self.assertEqual(runner.active, runner.uncertain_starts)
+        self.assertFalse(runner.slots.acquire(blocking=False))
+        self.assertFalse(runner.running)
+        # Docker eventually completed the timed-out creation; a real successful
+        # removal now proves the named container cannot continue running.
+        with mock.patch.object(runner, 'process', return_value=(0, b'')):
+            runner.reap_orphans()
+        self.assertTrue(runner.healthy())
+        self.assertFalse(runner.active)
+        self.assertFalse(runner.uncertain_starts)
+        self.assertTrue(runner.slots.acquire(blocking=False))
+        runner.slots.release()
+
+    def test_cancelled_process_does_not_spawn_a_docker_client(self):
+        runner = server.DockerRunner(self.config)
+        cancelled = threading.Event()
+        cancelled.set()
+        with mock.patch.object(server.subprocess, 'Popen') as spawn:
+            with self.assertRaisesRegex(server.Refused, 'cancelled'):
+                runner.process(['run', 'unused'], cancelled=cancelled)
+            spawn.assert_not_called()
+
 
 class HttpTest(EngineTest):
     def setUp(self):
