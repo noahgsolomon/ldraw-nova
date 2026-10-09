@@ -38,9 +38,14 @@ MAX_WORKSPACE = 32 * MiB
 MAX_FILES = 2048
 MAX_REQUEST = 10 * MiB
 MAX_TEXT = MiB
+MAX_READ_TEXT = 5 * MiB
 MAX_OUTPUT = 64 * 1024
 MAX_IMAGE = 2 * MiB
 MAX_IMAGES = 4
+MAX_RESPONSE = 16 * MiB
+# JSON's ASCII encoding can use six bytes for one UTF-8 input byte (for
+# example, a NUL). Preserve complete admitted models even at that boundary.
+MAX_READ_RESPONSE = MAX_READ_TEXT * 6 + MAX_IMAGES * ((MAX_IMAGE + 2) // 3 * 4) + 4096
 MAX_CACHE = 64 * MiB
 MAX_ARGS = 128
 VOLUME_CREATE_TIMEOUT = 10
@@ -807,6 +812,23 @@ class Engine:
                     raise Refused('Python commands require a workspace .py file')
         return {**body, 'source': source, 'args': body.get('args', []), 'imagePaths': images}
 
+    def read_result(self, workspace, body):
+        """Prepare a non-mutating read while the workspace lock is held."""
+        path = body['path']
+        source = self.config.toolkit if body['source'] == 'toolkit' else workspace
+        if body['source'] == 'toolkit' and path_parts(path)[0] not in PUBLIC_ROOTS:
+            raise Refused('Path is outside the public toolkit')
+        if path.lower().endswith(('.png', '.jpg', '.jpeg')) and body['source'] == 'workspace':
+            result = {'text': path, 'images': self.images(workspace, [path])}
+        else:
+            try:
+                result = {'text': read_bytes(source, path, MAX_READ_TEXT).decode('utf-8')}
+            except UnicodeDecodeError:
+                raise Refused('File is not UTF-8 text; read PNG/JPEG images by their path')
+        if body['imagePaths']:
+            result['images'] = self.images(workspace, body['imagePaths'])
+        return result
+
     def call(self, id, raw, cancelled=None):
         body = self.validate_call(raw)
         cancelled = cancelled or threading.Event()
@@ -825,14 +847,30 @@ class Engine:
             if meta['calls'] >= self.config.max_calls:
                 raise Refused('Workspace call limit reached', 429)
             cache_bytes = sum(p.stat().st_size for p in (directory / 'calls').iterdir())
-            # Reserve enough space for any allowed response before executing once.
-            reserve = MAX_IMAGES * ((MAX_IMAGE + 2) // 3 * 4) + MAX_TEXT * 6 + 4096
+            workspace = directory / meta['generation']
+            response_limit = MAX_READ_RESPONSE if body['action'] == 'read' else MAX_RESPONSE
+            prepared_read = read_error = None
+            if body['action'] == 'read':
+                # Read-only preparation has no external effects. Reserve its
+                # actual encoding so a large MPD cannot crowd out tiny authored
+                # instructions merely because both share a maximum read limit.
+                try:
+                    prepared_read = self.read_result(workspace, body)
+                    encoded_size = len(canonical(prepared_read))
+                    if encoded_size > response_limit:
+                        raise Refused('Encoded response exceeds its limit', 413)
+                except Refused as exc:
+                    read_error = exc
+                    encoded_size = len(canonical({'error': str(exc), 'status': exc.status}))
+                reserve = encoded_size + 4096
+            else:
+                # Commands and writes retain their pre-execution reservation.
+                reserve = response_limit + 4096
             if cache_bytes + reserve > MAX_CACHE:
                 raise Refused('Workspace response cache quota reached', 429)
             meta['calls'] += 1
             atomic_json(directory / 'meta.json', meta)
             atomic_json(record_path, {'hash': digest, 'state': 'started'})
-            workspace = directory / meta['generation']
             # Recover stale unpublished generations left by an interrupted host
             # process; refuse further execution if they cannot be reclaimed.
             for previous in directory.glob('generation-*'):
@@ -851,18 +889,15 @@ class Engine:
                     if parts and parts[0] not in PUBLIC_ROOTS:
                         raise Refused('Path is outside the public toolkit')
                 if action == 'write':
-                    put_file(workspace, path, body['text'].encode())
+                    content = body['text'].encode('utf-8')
+                    if len(content) > MAX_TEXT:
+                        raise Refused('Write text exceeds its limit', 413)
+                    put_file(workspace, path, content)
                     result = {'text': 'Wrote ' + path}
                 elif action == 'read':
-                    if path.lower().endswith(('.png', '.jpg', '.jpeg')) and body['source'] == 'workspace':
-                        result = {'text': path, 'images': self.images(workspace, [path])}
-                    else:
-                        try:
-                            result = {'text': read_bytes(source, path, MAX_FILE).decode('utf-8')}
-                        except UnicodeDecodeError:
-                            raise Refused('File is not UTF-8 text; read PNG/JPEG images by their path')
-                        if len(result['text'].encode()) > MAX_TEXT:
-                            raise Refused('Text file exceeds response limit; use Python to inspect a bounded excerpt', 413)
+                    if read_error is not None:
+                        raise read_error
+                    result = prepared_read
                 elif action == 'list':
                     fd = secure_fd(source, path, directory=True)
                     try:
@@ -883,11 +918,14 @@ class Engine:
                         read_bytes(workspace, path)
                     code, text, staging = self.runner.run(workspace, body, cancelled)
                     result = {'text': f'Exit code: {code}\n{text}'}
-                if len(result['text'].encode()) > MAX_TEXT:
+                text_limit = MAX_READ_TEXT if action == 'read' else MAX_TEXT
+                if len(result['text'].encode('utf-8')) > text_limit:
                     raise Refused('Response text exceeds its limit', 413)
                 active = staging or workspace
-                if body['imagePaths']:
+                if body['imagePaths'] and action != 'read':
                     result['images'] = self.images(active, body['imagePaths'])
+                if len(canonical(result)) > response_limit:
+                    raise Refused('Encoded response exceeds its limit', 413)
                 if staging is not None:
                     meta['generation'] = staging.name
                     atomic_json(directory / 'meta.json', meta)
