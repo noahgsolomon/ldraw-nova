@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "b917766f8dc24f6c6a9a9f2e0091c9cc59d46f05cd461827ecec0f967a548248",
+  "viewed_images": [
+    "home.png"
+  ],
+  "observations": [
+    "Two posts support one continuous rail; its base occupies Z=0..20 LDU."
+  ],
+  "scope": "Isolated visible geometry; consult validation.json for incomplete connector inference and inspect the containing assembly."
+}

@@ -1,0 +1,25 @@
+{
+  "key": "temple",
+  "title": "Jade Terrace Pavilion",
+  "category": "Temples and East Asian pavilions",
+  "lesson": "Three diminishing roof tiers and repeated red columns establish a vertical ceremonial rhythm.",
+  "source": "https://www.lego.com/en-us/product/temple-of-airjitzu-70751",
+  "scale": "minifigure",
+  "fit": "Keep a clear central stair and frame the entrance with paired planters.",
+  "avoid": "Do not describe this stylized pavilion as an accurate reconstruction of a particular culture or monument.",
+  "modules": [
+    "stairs",
+    "planter",
+    "tiered-canopy"
+  ],
+  "source_sha256": "e781547e89b562fce4254794c804be6f5ea2922c171f845fc3a54513419f9968",
+  "checks_passed": true,
+  "bom_matches": true,
+  "visual_review_recorded": false,
+  "physical_placements": 342,
+  "model": "temple/temple.mpd",
+  "plan": "temple/scene.plan.json",
+  "guide": "temple/README.md",
+  "preview": "temple/home.png",
+  "sections": 4
+}

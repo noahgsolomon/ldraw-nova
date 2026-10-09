@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "ba5abfca6dfb90a3fa95aeada3cbbb1314dea1a110c54fdffd6858851cdd175c",
+  "viewed_images": [
+    "home.png",
+    "front.png",
+    "top.png"
+  ],
+  "method": "Opened actual LeoCAD views in labelled browser review sheets; examined home composition, front elevation and site plan.",
+  "observations": [
+    "Different roof heights and red/green roofs distinguish the paired shops.",
+    "The T-shaped court remains open between the stall and the side lamp; glazed shop doors read as commercial entries."
+  ],
+  "revisions": [
+    "Replaced domestic opaque doors with glazed shop doors."
+  ],
+  "scope": "Exterior composition review; hidden interior interfaces and physical strength are not certified."
+}

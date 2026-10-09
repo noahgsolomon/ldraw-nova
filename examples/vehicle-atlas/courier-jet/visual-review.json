@@ -1,0 +1,19 @@
+{
+  "source_sha256": "be4286c32e8028fd533c0bcf0e1670c9567fdbea75f7dde4fa32550f4912ea3b",
+  "reviewed": "2026-09-24",
+  "status": "images_opened_and_reviewed",
+  "opened_images": [
+    "home.png",
+    "front.png",
+    "back.png",
+    "right.png",
+    "top.png",
+    "bottom.png"
+  ],
+  "review_method": "Opened final six-view contact sheet; detail/home and revision views also inspected where needed.",
+  "findings_and_revisions": [
+    "Matched aircraft nose/glass and tapered rear, swept wings, dedicated engine pods and an equipped cockpit."
+  ],
+  "physical_validity": "not_proven",
+  "review_notes": "../visual-review.md"
+}

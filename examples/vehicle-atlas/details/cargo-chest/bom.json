@@ -1,0 +1,19 @@
+{
+  "source_sha256": "b4ebddb4df3d448f61b1c0201824404a2d1de6c14e59710eadb8716876512006",
+  "bom": [
+    {
+      "part": "30150",
+      "description": "Container Adventurers Chest",
+      "colour_code": 70,
+      "colour_name": "Reddish_Brown",
+      "quantity": 1
+    },
+    {
+      "part": "3021",
+      "description": "Plate  2 x  3",
+      "colour_code": 0,
+      "colour_name": "Black",
+      "quantity": 2
+    }
+  ]
+}

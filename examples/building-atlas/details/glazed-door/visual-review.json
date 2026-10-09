@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "1c9e3edce488ad7ef6e42282db3e18361a9f59f723d824750e9c7531d662a724",
+  "viewed_images": [
+    "home.png"
+  ],
+  "observations": [
+    "A complete glazed leaf sits in the six-brick frame with a visible hinge edge."
+  ],
+  "scope": "Isolated visible geometry; consult validation.json for incomplete connector inference and inspect the containing assembly."
+}

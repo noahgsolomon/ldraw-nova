@@ -1,0 +1,16 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "a710f98cca6b9945b87e516b56d2c6e076109b2bc287b078e778699b8d2a0460",
+  "viewed_images": [
+    "home.png",
+    "front.png",
+    "top.png"
+  ],
+  "method": "Opened actual LeoCAD views in labelled browser review sheets; examined home composition, front elevation and site plan.",
+  "observations": [
+    "The striped round tower and lantern dominate the lower red-roofed keeper cottage.",
+    "The quay and water read clearly from above; holes in the round tower bricks are part geometry, and the beacon is static."
+  ],
+  "revisions": [],
+  "scope": "Exterior composition review; hidden interior interfaces and physical strength are not certified."
+}

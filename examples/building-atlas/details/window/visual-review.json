@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "02f6053d3bda6fa5a2dd2685b56112b32e36ee30488cede01bc4252cae57c30c",
+  "viewed_images": [
+    "home.png"
+  ],
+  "observations": [
+    "Both pane inserts sit inside the four-stud frame."
+  ],
+  "scope": "Isolated visible geometry; consult validation.json for incomplete connector inference and inspect the containing assembly."
+}

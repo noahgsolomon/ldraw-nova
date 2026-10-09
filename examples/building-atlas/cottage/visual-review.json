@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "0d2ca147ce56243cc1fa741879d7462804bec772dc077ed0a288eb49ce3b1646",
+  "viewed_images": [
+    "home.png",
+    "front.png",
+    "top.png"
+  ],
+  "method": "Opened actual LeoCAD views in labelled browser review sheets; examined home composition, front elevation and site plan.",
+  "observations": [
+    "The white dormer and porch form one entrance axis beneath the slate roof.",
+    "The tree sits left of the path; the bench and flower box balance the right garden."
+  ],
+  "revisions": [
+    "Added a supported dormer to break the large uninterrupted roof."
+  ],
+  "scope": "Exterior composition review; hidden interior interfaces and physical strength are not certified."
+}

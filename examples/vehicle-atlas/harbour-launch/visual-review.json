@@ -1,0 +1,19 @@
+{
+  "source_sha256": "ac0c7b6eb90a7f4f60cfa8125969ba91fdfc1c394d5227d24c2f479ee94cf1b4",
+  "reviewed": "2026-09-24",
+  "status": "images_opened_and_reviewed",
+  "opened_images": [
+    "home.png",
+    "front.png",
+    "back.png",
+    "right.png",
+    "top.png",
+    "bottom.png"
+  ],
+  "review_method": "Opened final six-view contact sheet; detail/home and revision views also inspected where needed.",
+  "findings_and_revisions": [
+    "Purpose-made boat hull, open helm with a real seat and steering wheel, navigation lights and life ring."
+  ],
+  "physical_validity": "not_proven",
+  "review_notes": "../visual-review.md"
+}

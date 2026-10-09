@@ -1,0 +1,19 @@
+{
+  "source_sha256": "dedea1a1a946f93d3389f5e5a34afca6b9fedb2116afa87293000cec8b313ab5",
+  "reviewed": "2026-09-24",
+  "status": "images_opened_and_reviewed",
+  "opened_images": [
+    "home.png",
+    "front.png",
+    "back.png",
+    "right.png",
+    "top.png",
+    "bottom.png"
+  ],
+  "review_method": "Opened final six-view contact sheet; detail/home and revision views also inspected where needed.",
+  "findings_and_revisions": [
+    "Paired red port and green starboard lights on a slender four-stud crossbar."
+  ],
+  "physical_validity": "not_proven",
+  "review_notes": "../../visual-review.md"
+}

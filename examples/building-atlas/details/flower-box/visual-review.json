@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "27cff8f1bf6460521b413c9c25afc36ceb48904ca3d8629498abf3f0640ed5a0",
+  "viewed_images": [
+    "home.png"
+  ],
+  "observations": [
+    "Four flowers rise behind a low tan retaining edge."
+  ],
+  "scope": "Isolated visible geometry; consult validation.json for incomplete connector inference and inspect the containing assembly."
+}

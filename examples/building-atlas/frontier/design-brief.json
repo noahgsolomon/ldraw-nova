@@ -1,0 +1,25 @@
+{
+  "key": "frontier",
+  "title": "Mesa Crossing Trading Post",
+  "category": "Western and frontier",
+  "lesson": "A false-front shop, boardwalk and small stable establish a frontier settlement.",
+  "source": "https://www.lego.com/cdn/product-assets/product.bi.core.pdf/4585106.pdf",
+  "scale": "minifigure",
+  "fit": "Timber porches and a dusty open yard belong here; keep the false front above the lower roof.",
+  "avoid": "Do not rely on lettering alone to distinguish the building from a modern shop.",
+  "modules": [
+    "porch",
+    "fence",
+    "bench"
+  ],
+  "source_sha256": "42718606b46fcf4c8d6a72d0ea26b469849dec769d631ddf6f1edd8255e20f37",
+  "checks_passed": true,
+  "bom_matches": true,
+  "visual_review_recorded": false,
+  "physical_placements": 381,
+  "model": "frontier/frontier.mpd",
+  "plan": "frontier/scene.plan.json",
+  "guide": "frontier/README.md",
+  "preview": "frontier/home.png",
+  "sections": 12
+}

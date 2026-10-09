@@ -1,0 +1,15 @@
+{
+  "images": [
+    "home.png",
+    "front.png",
+    "back.png",
+    "right.png",
+    "left.png",
+    "top.png",
+    "bottom.png"
+  ],
+  "bom": "leocad-bom.csv",
+  "embedded_definitions_materialized": 0,
+  "visual_review": "reviewed",
+  "source_sha256": "939934608f422cd4cab8aecb1232f392f33d39282eb51da04c2c3672e84fd708"
+}

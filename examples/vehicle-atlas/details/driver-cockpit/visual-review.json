@@ -1,0 +1,19 @@
+{
+  "source_sha256": "19071e76667222d6fbc35482467949576bb13ef38f7733975fb3ffa3b4e08ecd",
+  "reviewed": "2026-09-24",
+  "status": "images_opened_and_reviewed",
+  "opened_images": [
+    "home.png",
+    "front.png",
+    "back.png",
+    "right.png",
+    "top.png",
+    "bottom.png"
+  ],
+  "review_method": "Opened final six-view contact sheet; detail/home and revision views also inspected where needed.",
+  "findings_and_revisions": [
+    "Moulded seat, actual steering stand/wheel and printed dashboard on a two-by-six stud floor."
+  ],
+  "physical_validity": "not_proven",
+  "review_notes": "../../visual-review.md"
+}

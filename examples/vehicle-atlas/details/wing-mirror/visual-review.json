@@ -1,0 +1,19 @@
+{
+  "source_sha256": "a66b4cba6b10fbbf373beabcb6c26edfcffdf17f18db185d8a31e3ef83ae8600",
+  "reviewed": "2026-09-24",
+  "status": "images_opened_and_reviewed",
+  "opened_images": [
+    "home.png",
+    "front.png",
+    "back.png",
+    "right.png",
+    "top.png",
+    "bottom.png"
+  ],
+  "review_method": "Opened final six-view contact sheet; detail/home and revision views also inspected where needed.",
+  "findings_and_revisions": [
+    "Compact side mirror on a headlight-brick mount, with a real sideways tile attachment."
+  ],
+  "physical_validity": "not_proven",
+  "review_notes": "../../visual-review.md"
+}

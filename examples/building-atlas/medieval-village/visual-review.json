@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "12ab1fb22ff1ce3d0e7bdbc58b0a1931c8a0317a2648fd77d80562cc7b56931f",
+  "viewed_images": [
+    "home.png",
+    "front.png",
+    "top.png"
+  ],
+  "method": "Opened actual LeoCAD views in labelled browser review sheets; examined home composition, front elevation and site plan.",
+  "observations": [
+    "The taller timber-framed house and lower workshop define a square with a striped stall.",
+    "Brown verticals and cream panels are visible on front and side elevations."
+  ],
+  "revisions": [
+    "Replaced broad horizontal bands with a vertical timber/panel rhythm."
+  ],
+  "scope": "Exterior composition review; hidden interior interfaces and physical strength are not certified."
+}

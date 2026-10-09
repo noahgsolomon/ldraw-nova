@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "210ef152f4eb9c38fa7da3abadb1463eb2638ddc85eb8b6fd604acb77a2077e9",
+  "viewed_images": [
+    "home.png"
+  ],
+  "observations": [
+    "Alternating grey bands rise from a four-stud square plinth."
+  ],
+  "scope": "Isolated visible geometry; consult validation.json for incomplete connector inference and inspect the containing assembly."
+}

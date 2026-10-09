@@ -1,0 +1,33 @@
+{
+  "key": "market-stall",
+  "description": "Four-stud market stall; supported counter, posts and striped canopy",
+  "root": "teaching-stall.ldr",
+  "anchors": {
+    "base": {
+      "at": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "bounds_ldu": {
+    "min": [
+      -60.0,
+      -124.0,
+      -40.0
+    ],
+    "max": [
+      60.0,
+      0.0,
+      40.0
+    ]
+  },
+  "physical_placements": 33,
+  "contact_count": 48,
+  "optimistic_component_count": 15,
+  "placement_notes": [],
+  "source_sha256": "20d5b1df533913b600a5038d980ce2092319f5158f95343fd2dcafbaf57cf84f",
+  "model": "details/market-stall/market-stall.mpd",
+  "plan": "details/market-stall/scene.plan.json"
+}

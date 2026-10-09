@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "1b80b7a79f84f066203336fd2f484e203ba6b57e59da6008bd46272c1a9bedd9",
+  "viewed_images": [
+    "home.png"
+  ],
+  "observations": [
+    "A single tall pane fills the green frame."
+  ],
+  "scope": "Isolated visible geometry; consult validation.json for incomplete connector inference and inspect the containing assembly."
+}

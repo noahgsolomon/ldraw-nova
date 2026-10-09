@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "1343ba5dde6f20790d64e78f93540a906a16e73fbdbd8f19c254d8fb6ada9a68",
+  "viewed_images": [
+    "home.png",
+    "front.png",
+    "top.png"
+  ],
+  "method": "Opened actual LeoCAD views in labelled browser review sheets; examined home composition, front elevation and site plan.",
+  "observations": [
+    "The broad open vehicle bay reads clearly beneath the emblem and horizontal white bands.",
+    "The slit-window hose tower stands to the side; both beacons remain outside the apron."
+  ],
+  "revisions": [
+    "Added a real patterned fire emblem and narrow drying-tower slots."
+  ],
+  "scope": "Exterior composition review; hidden interior interfaces and physical strength are not certified."
+}

@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "3d568e511725e7414de7a0691bb25df31ff2fe2cd820a33d9f3d7eccb1bbaed6",
+  "viewed_images": [
+    "home.png"
+  ],
+  "observations": [
+    "A low transparent blue band sits between a white base and a dish cap."
+  ],
+  "scope": "Isolated visible geometry; consult validation.json for incomplete connector inference and inspect the containing assembly."
+}

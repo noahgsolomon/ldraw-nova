@@ -1,0 +1,23 @@
+{
+  "key": "fire-station",
+  "title": "Cinder Bay Fire Station",
+  "category": "Emergency services",
+  "lesson": "A wide vehicle portal, hose tower and red/white bands make the function readable.",
+  "source": "https://www.lego.com/en-us/product/fire-station-60320",
+  "scale": "minifigure",
+  "fit": "The vehicle apron stays empty; the tower sits behind one edge of the garage.",
+  "avoid": "Do not put trees, benches or stairs in the vehicle exit.",
+  "modules": [
+    "beacon"
+  ],
+  "source_sha256": "1343ba5dde6f20790d64e78f93540a906a16e73fbdbd8f19c254d8fb6ada9a68",
+  "checks_passed": true,
+  "bom_matches": true,
+  "visual_review_recorded": false,
+  "physical_placements": 462,
+  "model": "fire-station/fire-station.mpd",
+  "plan": "fire-station/scene.plan.json",
+  "guide": "fire-station/README.md",
+  "preview": "fire-station/home.png",
+  "sections": 7
+}

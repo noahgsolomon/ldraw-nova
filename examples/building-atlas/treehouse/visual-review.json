@@ -1,0 +1,16 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "f8bd6b24c219f234bfa943e22630acfb5a74b1e2a558a0cc170df30a0b6ce3c1",
+  "viewed_images": [
+    "home.png",
+    "front.png",
+    "top.png"
+  ],
+  "method": "Opened actual LeoCAD views in labelled browser review sheets; examined home composition, front elevation and site plan.",
+  "observations": [
+    "The raised hut has a visible central trunk, four posts and a long side stair.",
+    "Separate trees frame the platform; foliage is sparse and does not act as structural support."
+  ],
+  "revisions": [],
+  "scope": "Exterior composition review; hidden interior interfaces and physical strength are not certified."
+}

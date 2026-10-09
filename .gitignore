@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.cache/
+output/
+*.egg-info/
+parts-glb/
+models-glb/
+.DS_Store
+Thumbs.db
+.vscode/
+.claude/
+.vscode/
+.obsidian/
+.DS_Store

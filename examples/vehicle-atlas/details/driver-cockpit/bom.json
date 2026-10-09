@@ -1,0 +1,33 @@
+{
+  "source_sha256": "19071e76667222d6fbc35482467949576bb13ef38f7733975fb3ffa3b4e08ecd",
+  "bom": [
+    {
+      "part": "3069bp25",
+      "description": "Tile  1 x  2 with Computer Pattern",
+      "colour_code": 0,
+      "colour_name": "Black",
+      "quantity": 1
+    },
+    {
+      "part": "3795",
+      "description": "Plate  2 x  6",
+      "colour_code": 0,
+      "colour_name": "Black",
+      "quantity": 1
+    },
+    {
+      "part": "3829c01",
+      "description": "Car Steering Stand and Wheel (Complete)",
+      "colour_code": 0,
+      "colour_name": "Black",
+      "quantity": 1
+    },
+    {
+      "part": "4079",
+      "description": "Minifig Seat  2 x  2",
+      "colour_code": 70,
+      "colour_name": "Reddish_Brown",
+      "quantity": 1
+    }
+  ]
+}

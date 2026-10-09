@@ -1,0 +1,33 @@
+{
+  "key": "battlement",
+  "description": "Square tower top: connected deck, low parapet and alternating merlons",
+  "root": "teaching-battlement.ldr",
+  "anchors": {
+    "base": {
+      "at": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "bounds_ldu": {
+    "min": [
+      -80.0,
+      -60.0,
+      -100.0
+    ],
+    "max": [
+      80.0,
+      0.0,
+      100.0
+    ]
+  },
+  "physical_placements": 25,
+  "contact_count": 32,
+  "optimistic_component_count": 17,
+  "placement_notes": [],
+  "source_sha256": "e91309dafa9a8a94bd9407759f1a143f50e731e1707b517971de11a07be046b8",
+  "model": "details/battlement/battlement.mpd",
+  "plan": "details/battlement/scene.plan.json"
+}

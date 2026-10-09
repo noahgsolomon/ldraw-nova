@@ -1,0 +1,33 @@
+{
+  "source_sha256": "dedea1a1a946f93d3389f5e5a34afca6b9fedb2116afa87293000cec8b313ab5",
+  "bom": [
+    {
+      "part": "3069b",
+      "description": "Tile  1 x  2 with Groove",
+      "colour_code": 71,
+      "colour_name": "Light_Bluish_Grey",
+      "quantity": 1
+    },
+    {
+      "part": "3710",
+      "description": "Plate  1 x  4",
+      "colour_code": 19,
+      "colour_name": "Tan",
+      "quantity": 1
+    },
+    {
+      "part": "6141",
+      "description": "Plate  1 x  1 Round",
+      "colour_code": 34,
+      "colour_name": "Trans_Green",
+      "quantity": 1
+    },
+    {
+      "part": "6141",
+      "description": "Plate  1 x  1 Round",
+      "colour_code": 36,
+      "colour_name": "Trans_Red",
+      "quantity": 1
+    }
+  ]
+}

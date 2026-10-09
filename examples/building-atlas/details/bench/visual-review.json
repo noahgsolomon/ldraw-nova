@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "66f749924ae0615fcedb1c2339b64aa583081652fe38bc326e1f4b22386a2c76",
+  "viewed_images": [
+    "home.png"
+  ],
+  "observations": [
+    "A brown seat/back bridges two grey feet; the back defines its facing direction."
+  ],
+  "scope": "Isolated visible geometry; consult validation.json for incomplete connector inference and inspect the containing assembly."
+}

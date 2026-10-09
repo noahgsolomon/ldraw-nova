@@ -1,0 +1,33 @@
+{
+  "key": "window",
+  "description": "Four-stud glazed bay; bottom Y=0, body height 72 LDU, front -Z",
+  "root": "window4-15-47.ldr",
+  "anchors": {
+    "base": {
+      "at": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "bounds_ldu": {
+    "min": [
+      -40.0,
+      -76.0,
+      -10.0
+    ],
+    "max": [
+      40.0,
+      0.0,
+      10.0
+    ]
+  },
+  "physical_placements": 3,
+  "contact_count": 0,
+  "optimistic_component_count": 3,
+  "placement_notes": [],
+  "source_sha256": "02f6053d3bda6fa5a2dd2685b56112b32e36ee30488cede01bc4252cae57c30c",
+  "model": "details/window/window.mpd",
+  "plan": "details/window/scene.plan.json"
+}

@@ -1,0 +1,19 @@
+{
+  "source_sha256": "9412a0dbbb7455a0174f95dbdb897a89e49bc8526544354bcbcf527ce3cf5be5",
+  "reviewed": "2026-09-24",
+  "status": "images_opened_and_reviewed",
+  "opened_images": [
+    "home.png",
+    "front.png",
+    "back.png",
+    "right.png",
+    "top.png",
+    "bottom.png"
+  ],
+  "review_method": "Opened final six-view contact sheet; detail/home and revision views also inspected where needed.",
+  "findings_and_revisions": [
+    "Separate cab and open load bed, capped bed rails, contrasting bumpers and functional cargo space."
+  ],
+  "physical_validity": "not_proven",
+  "review_notes": "../visual-review.md"
+}

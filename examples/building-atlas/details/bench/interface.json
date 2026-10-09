@@ -1,0 +1,36 @@
+{
+  "key": "bench",
+  "description": "Four-stud garden/platform bench; bottom Y=0; front -Z",
+  "root": "bench-70.ldr",
+  "anchors": {
+    "base": {
+      "at": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "bounds_ldu": {
+    "min": [
+      -40.0,
+      -60.0,
+      -20.0
+    ],
+    "max": [
+      40.0,
+      0.0,
+      20.0
+    ]
+  },
+  "physical_placements": 6,
+  "contact_count": 8,
+  "optimistic_component_count": 1,
+  "placement_notes": [
+    "Face the view or path; leave a two-stud approach in front.",
+    "Use garden timber for rural scenes, dark frames for transport scenes."
+  ],
+  "source_sha256": "66f749924ae0615fcedb1c2339b64aa583081652fe38bc326e1f4b22386a2c76",
+  "model": "details/bench/bench.mpd",
+  "plan": "details/bench/scene.plan.json"
+}

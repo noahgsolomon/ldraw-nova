@@ -1,0 +1,10 @@
+{
+  "source_sha256": "a710f98cca6b9945b87e516b56d2c6e076109b2bc287b078e778699b8d2a0460",
+  "renderer": "LeoCAD",
+  "visual_review": "Recorded separately in visual-review.json; verify its source hash.",
+  "images": {
+    "home.png": "bf3d0b66a6fcceb09195a8288025527e23e66f6b3e95037b99ce3e45f2a82fa3",
+    "front.png": "0e28f69482777d612b8bbefe90099617a2f0745ebd0857ad81d9b08722d8df16",
+    "top.png": "a3ee25bf5fcbcb552039c3a01baa108c188efaebe2f72b76fa36500e2b442606"
+  }
+}

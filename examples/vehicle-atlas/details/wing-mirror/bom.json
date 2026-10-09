@@ -1,0 +1,26 @@
+{
+  "source_sha256": "a66b4cba6b10fbbf373beabcb6c26edfcffdf17f18db185d8a31e3ef83ae8600",
+  "bom": [
+    {
+      "part": "3024",
+      "description": "Plate  1 x  1",
+      "colour_code": 288,
+      "colour_name": "Dark_Green",
+      "quantity": 1
+    },
+    {
+      "part": "3070b",
+      "description": "Tile  1 x  1 with Groove",
+      "colour_code": 71,
+      "colour_name": "Light_Bluish_Grey",
+      "quantity": 1
+    },
+    {
+      "part": "4070",
+      "description": "Brick  1 x  1 with Headlight",
+      "colour_code": 288,
+      "colour_name": "Dark_Green",
+      "quantity": 1
+    }
+  ]
+}

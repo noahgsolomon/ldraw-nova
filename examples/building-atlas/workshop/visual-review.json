@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "76a82b441e8e597611f430528b0de0c23a3b5d5b72ef6e0f0d8befdaef938c0e",
+  "viewed_images": [
+    "home.png",
+    "front.png",
+    "top.png"
+  ],
+  "method": "Opened actual LeoCAD views in labelled browser review sheets; examined home composition, front elevation and site plan.",
+  "observations": [
+    "Three repeated gable roof bays have blue glazing along one pitch of each bay.",
+    "The detached banded stack and spare work yard support the industrial character; the roofs are symmetric gables, not asymmetric sawtooth construction."
+  ],
+  "revisions": [
+    "Changed all-blue roof slopes to contrasting opaque/glazed pitches."
+  ],
+  "scope": "Exterior composition review; hidden interior interfaces and physical strength are not certified."
+}

@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "f75c22b9a4f0b94fed3be05a7e6e2438f23567b8c920930cb45feea7930fb901",
+  "viewed_images": [
+    "home.png"
+  ],
+  "observations": [
+    "A small windowed projection interrupts the front roof pitch with its own supported cap."
+  ],
+  "scope": "Isolated visible geometry; consult validation.json for incomplete connector inference and inspect the containing assembly."
+}

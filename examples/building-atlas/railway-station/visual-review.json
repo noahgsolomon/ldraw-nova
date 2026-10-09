@@ -1,0 +1,16 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "b95d8a6c2aae52dd6518874591e9c18ddeee1a19571600a849f1d4d52f8fe4f4",
+  "viewed_images": [
+    "home.png",
+    "front.png",
+    "top.png"
+  ],
+  "method": "Opened actual LeoCAD views in labelled browser review sheets; examined home composition, front elevation and site plan.",
+  "observations": [
+    "A long low canopy balances the taller booking hall.",
+    "Benches face the yellow platform edge; no tracks, trains or verified rolling-stock envelope are included."
+  ],
+  "revisions": [],
+  "scope": "Exterior composition review; hidden interior interfaces and physical strength are not certified."
+}

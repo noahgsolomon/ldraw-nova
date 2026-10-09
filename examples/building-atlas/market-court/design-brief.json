@@ -1,0 +1,25 @@
+{
+  "key": "market-court",
+  "title": "Marigold Market Court",
+  "category": "Commercial and hospitality",
+  "lesson": "Two different shops and a produce stall share one pedestrian court.",
+  "source": "https://www.lego.com/en-us/product/main-street-31141",
+  "scale": "minifigure",
+  "fit": "Keep the middle court open; repeat cream trim but vary roof colour and storefront width.",
+  "avoid": "Do not mirror every detail or fill the court with furniture.",
+  "modules": [
+    "stall",
+    "lamp",
+    "bench"
+  ],
+  "source_sha256": "ba5abfca6dfb90a3fa95aeada3cbbb1314dea1a110c54fdffd6858851cdd175c",
+  "checks_passed": true,
+  "bom_matches": true,
+  "visual_review_recorded": false,
+  "physical_placements": 712,
+  "model": "market-court/market-court.mpd",
+  "plan": "market-court/scene.plan.json",
+  "guide": "market-court/README.md",
+  "preview": "market-court/home.png",
+  "sections": 10
+}

@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "bc33e48c8df56847c259973915e5da9de0b8339695fbc4030bcc0f6d430c0e7e",
+  "viewed_images": [
+    "home.png",
+    "front.png",
+    "top.png"
+  ],
+  "method": "Opened actual LeoCAD views in labelled browser review sheets; examined home composition, front elevation and site plan.",
+  "observations": [
+    "The clock tower rises above the repeated classroom window band.",
+    "The paved forecourt stays open, with the bench and tree at opposite edges."
+  ],
+  "revisions": [
+    "Added slit openings to the tower and used a glazed entrance."
+  ],
+  "scope": "Exterior composition review; hidden interior interfaces and physical strength are not certified."
+}

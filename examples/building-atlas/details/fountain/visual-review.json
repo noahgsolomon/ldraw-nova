@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-07",
+  "source_sha256": "696f1e98e0025e6d84ec8e2613a29fda278a558a9deac3e293069854edc13057",
+  "viewed_images": [
+    "home.png"
+  ],
+  "observations": [
+    "The tiled water pool surrounds a raised clear water column without a tile below the column support."
+  ],
+  "scope": "Isolated visible geometry; consult validation.json for incomplete connector inference and inspect the containing assembly."
+}

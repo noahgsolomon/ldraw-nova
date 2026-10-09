@@ -1,0 +1,44 @@
+{
+  "checks_passed": true,
+  "source_sha256": "d353a8b759c8f7d1d1dbb3232a0ced9d17e55e60d7c8a41c01f67f18e22beb39",
+  "diagnostics": [],
+  "geometry": {
+    "complete": true,
+    "physical_validity": "not_proven",
+    "bounds": {
+      "min": [
+        -60.0,
+        -28.0,
+        -30.0
+      ],
+      "max": [
+        60.0,
+        0.0,
+        30.0
+      ]
+    },
+    "occurrence_count": 4,
+    "detail": "summary",
+    "instance_offset": 0,
+    "instances": [],
+    "instances_truncated": true,
+    "contacts_checked": true,
+    "contact_count": 18,
+    "contacts": [],
+    "contacts_truncated": true,
+    "confirmed_components": null,
+    "optimistic_components": null,
+    "optimistic_component_count": 1,
+    "confirmed_component_count": 1,
+    "components_truncated": true,
+    "overlap_candidate_count": 3,
+    "overlaps": [],
+    "overlaps_truncated": true,
+    "diagnostics": [],
+    "limitations": [
+      "AABB candidates do not prove collisions; stud/socket bounding boxes normally overlap.",
+      "Connector matches, including 'confirmed', are computational evidence, not buildability certification.",
+      "No material intersection, clutch strength, stability, legal connection stress, or real colour availability proof."
+    ]
+  }
+}

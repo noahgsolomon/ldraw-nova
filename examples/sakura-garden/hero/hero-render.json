@@ -1,0 +1,91 @@
+{
+  "renderer": "LeoCAD",
+  "source": "output/sakura-garden/sakura-garden.mpd",
+  "source_sha256": "4880c2bdfc218d85629f9cffacbe52985092cdbe3e397f5ec0b2174e22b399a3",
+  "width": 1600,
+  "height": 1200,
+  "fov": 30,
+  "shading": "full",
+  "line_width": 0.5,
+  "automated_edge_contrast": 0.3,
+  "shots": {
+    "hero-pond": {
+      "image": "hero-pond.png",
+      "camera_ldraw": [
+        -1500,
+        -1050,
+        -1650
+      ],
+      "target_ldraw": [
+        40,
+        -230,
+        40
+      ]
+    },
+    "hero-axis": {
+      "image": "hero-axis.png",
+      "camera_ldraw": [
+        700,
+        -700,
+        -2100
+      ],
+      "target_ldraw": [
+        200,
+        -300,
+        0
+      ]
+    },
+    "hero-pagoda": {
+      "image": "hero-pagoda.png",
+      "camera_ldraw": [
+        -900,
+        -500,
+        -1100
+      ],
+      "target_ldraw": [
+        200,
+        -420,
+        200
+      ]
+    },
+    "hero-high": {
+      "image": "hero-high.png",
+      "camera_ldraw": [
+        1500,
+        -2100,
+        -1800
+      ],
+      "target_ldraw": [
+        0,
+        -150,
+        0
+      ]
+    },
+    "hero-bridge": {
+      "image": "hero-bridge.png",
+      "camera_ldraw": [
+        -760,
+        -330,
+        -900
+      ],
+      "target_ldraw": [
+        -210,
+        -70,
+        -250
+      ]
+    },
+    "hero-torii": {
+      "image": "hero-torii.png",
+      "camera_ldraw": [
+        520,
+        -140,
+        -900
+      ],
+      "target_ldraw": [
+        220,
+        -150,
+        -300
+      ]
+    }
+  }
+}

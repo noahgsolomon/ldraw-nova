@@ -1,0 +1,14 @@
+{
+  "source_sha256": "dedea1a1a946f93d3389f5e5a34afca6b9fedb2116afa87293000cec8b313ab5",
+  "images": [
+    "home.png",
+    "front.png",
+    "back.png",
+    "right.png",
+    "top.png",
+    "bottom.png"
+  ],
+  "bom": "leocad-bom.csv",
+  "embedded_definitions_materialized": 0,
+  "visual_review": "required: open and inspect the images"
+}

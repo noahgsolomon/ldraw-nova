@@ -1,0 +1,40 @@
+{
+  "key": "dormer-roof",
+  "description": "Removable gabled roof: supported slope courses, contrasting gable core and tiled ridge",
+  "root": "teaching-dormer-roof.ldr",
+  "anchors": {
+    "base": {
+      "at": [
+        0,
+        0,
+        0
+      ]
+    },
+    "ridge": {
+      "at": [
+        0,
+        -136,
+        0
+      ]
+    }
+  },
+  "bounds_ldu": {
+    "min": [
+      -180.0,
+      -136.0,
+      -120.0
+    ],
+    "max": [
+      180.0,
+      0.0,
+      120.0
+    ]
+  },
+  "physical_placements": 213,
+  "contact_count": 750,
+  "optimistic_component_count": 6,
+  "placement_notes": [],
+  "source_sha256": "f75c22b9a4f0b94fed3be05a7e6e2438f23567b8c920930cb45feea7930fb901",
+  "model": "details/dormer-roof/dormer-roof.mpd",
+  "plan": "details/dormer-roof/scene.plan.json"
+}

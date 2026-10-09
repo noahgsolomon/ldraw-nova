@@ -1,0 +1,33 @@
+{
+  "key": "display-window",
+  "description": "Four-stud full-height fixed glazing; bottom Y=0, height 144 LDU",
+  "root": "display4-288.ldr",
+  "anchors": {
+    "base": {
+      "at": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "bounds_ldu": {
+    "min": [
+      -40.0,
+      -148.0,
+      -10.0
+    ],
+    "max": [
+      40.0,
+      0.0,
+      10.0
+    ]
+  },
+  "physical_placements": 2,
+  "contact_count": 0,
+  "optimistic_component_count": 2,
+  "placement_notes": [],
+  "source_sha256": "1b80b7a79f84f066203336fd2f484e203ba6b57e59da6008bd46272c1a9bedd9",
+  "model": "details/display-window/display-window.mpd",
+  "plan": "details/display-window/scene.plan.json"
+}

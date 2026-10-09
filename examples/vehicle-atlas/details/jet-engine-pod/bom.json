@@ -1,0 +1,19 @@
+{
+  "source_sha256": "6b80c2c22fc74d96d8509d67c9940c07223c34dcbd29cb0abe15ed77ce5e6c28",
+  "bom": [
+    {
+      "part": "4868b",
+      "description": "Plane Jet Engine with Plate  2 x  2",
+      "colour_code": 19,
+      "colour_name": "Tan",
+      "quantity": 1
+    },
+    {
+      "part": "4869",
+      "description": "Plane Jet Engine Centre",
+      "colour_code": 71,
+      "colour_name": "Light_Bluish_Grey",
+      "quantity": 1
+    }
+  ]
+}

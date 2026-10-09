@@ -1,0 +1,43 @@
+{
+  "key": "tree",
+  "description": "Layered garden tree; bottom Y=0; foliage needs a nine-stud clearing",
+  "root": "leaf-tree-288-5.ldr",
+  "anchors": {
+    "base": {
+      "at": [
+        0,
+        0,
+        0
+      ]
+    },
+    "trunk": {
+      "at": [
+        -10.0,
+        -136,
+        -10.0
+      ]
+    }
+  },
+  "bounds_ldu": {
+    "min": [
+      -78.0,
+      -244.0,
+      -78.0
+    ],
+    "max": [
+      40.0,
+      0.0,
+      58.0
+    ]
+  },
+  "physical_placements": 18,
+  "contact_count": 19,
+  "optimistic_component_count": 1,
+  "placement_notes": [
+    "Reserve a nine-stud canopy clearing rather than only the four-stud plinth.",
+    "Frame a building asymmetrically; do not put foliage across its focal entrance."
+  ],
+  "source_sha256": "fd7e35eb733e731deaad74071d16be46dc3aa2a1de43830c0cf56a451bee3716",
+  "model": "details/tree/tree.mpd",
+  "plan": "details/tree/scene.plan.json"
+}

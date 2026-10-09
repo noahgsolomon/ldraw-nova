@@ -1,0 +1,15 @@
+{
+  "file": "examples/modular-street/copper-lane.mpd",
+  "section": null,
+  "profile": "syntax",
+  "checks_passed": true,
+  "physical_validity": "not_proven",
+  "diagnostics": [],
+  "comparison": {
+    "matches": true,
+    "physical_placements": 1655,
+    "leocad_placements": 1655,
+    "differences": []
+  },
+  "source_sha256": "a3ac48138bb5e3b382b076c289c3bc14741380600ac96f36dbcc994424b97c21"
+}

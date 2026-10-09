@@ -1,0 +1,8 @@
+{
+  "source_sha256": "14d30690522c14913b59d86360508a58e59a66983d8fc73698fb5c018b2695dd",
+  "renderer": "LeoCAD",
+  "visual_review": "Recorded separately in visual-review.json; verify its source hash.",
+  "images": {
+    "home.png": "8548e74cf5d3b7c4f92e028067b01e5d70abecc12493a5133666c37d5b6ffde0"
+  }
+}

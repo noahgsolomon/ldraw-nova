@@ -1,0 +1,153 @@
+{
+  "date": "2026-09-26",
+  "scope": "technic-structure",
+  "mechanisms_authorized": false,
+  "registry": {
+    "definitions": 34,
+    "aliases": 4
+  },
+  "automated_suite": {
+    "command": ".venv/bin/python -m pytest -q",
+    "passed": 199,
+    "seconds": 77.97
+  },
+  "atlas": [
+    {
+      "name": "reinforced-frame",
+      "source_sha256": "5adb4bec0c0bb444afe9ee8936e905b9bbc5f80eaebaf3cab2cb2143a646c31a",
+      "physical_placements": 13,
+      "mechanical_contacts": 16,
+      "restrained_member_groups": 1,
+      "required_joints": 16,
+      "bom_matches": true,
+      "inspected_views": [
+        "home.png",
+        "front.png",
+        "back.png",
+        "right.png",
+        "left.png",
+        "top.png",
+        "bottom.png"
+      ],
+      "visual_review": "../../examples/technic-atlas/reinforced-frame/visual-review.json"
+    },
+    {
+      "name": "box-chassis",
+      "source_sha256": "939934608f422cd4cab8aecb1232f392f33d39282eb51da04c2c3672e84fd708",
+      "physical_placements": 18,
+      "mechanical_contacts": 24,
+      "restrained_member_groups": 1,
+      "required_joints": 24,
+      "bom_matches": true,
+      "inspected_views": [
+        "home.png",
+        "front.png",
+        "back.png",
+        "right.png",
+        "left.png",
+        "top.png",
+        "bottom.png"
+      ],
+      "visual_review": "../../examples/technic-atlas/box-chassis/visual-review.json"
+    },
+    {
+      "name": "frame-tower",
+      "source_sha256": "570e01297b7ed08d6379e7145d528bfb6b67481c856b8376f1793d40992be892",
+      "physical_placements": 36,
+      "mechanical_contacts": 56,
+      "restrained_member_groups": 1,
+      "required_joints": 56,
+      "bom_matches": true,
+      "inspected_views": [
+        "home.png",
+        "front.png",
+        "back.png",
+        "right.png",
+        "left.png",
+        "top.png",
+        "bottom.png"
+      ],
+      "visual_review": "../../examples/technic-atlas/frame-tower/visual-review.json"
+    },
+    {
+      "name": "service-platform",
+      "source_sha256": "1a4da42ba87b08fa4c04ee29ed43227a654037229f264e04a14814c1f4d6c3b2",
+      "physical_placements": 55,
+      "mechanical_contacts": 32,
+      "restrained_member_groups": 1,
+      "required_joints": 40,
+      "bom_matches": true,
+      "inspected_views": [
+        "home.png",
+        "front.png",
+        "back.png",
+        "right.png",
+        "left.png",
+        "top.png",
+        "bottom.png"
+      ],
+      "visual_review": "../../examples/technic-atlas/service-platform/visual-review.json"
+    }
+  ],
+  "inspected_image_count": 28,
+  "review_lifecycle": {
+    "unchanged_preserved": true,
+    "changed_source_rejected": true,
+    "changed_image_digest_rejected": true,
+    "incomplete_view_set_rejected": true
+  },
+  "discovery": {
+    "engine": "fts",
+    "query": "frame chassis support",
+    "source_field": "SUBMODELS_DESCRIPTIONS_JEV.full_description",
+    "filters": {
+      "system": false,
+      "construction": "technic-structure",
+      "min_parts": 2,
+      "max_parts": 250,
+      "max_technic_share": 0.5,
+      "parent_cap": 2
+    },
+    "shortlisted": 24,
+    "eligible_after_measurement": 19,
+    "rejected_counts": {
+      "mechanism_content": 4,
+      "too_many_parts": 1
+    },
+    "results": [
+      {
+        "id": "submodel-767b829125eea785ff9dbccc",
+        "model": "42099-1.mpd",
+        "section": "42099 - chassis3.ldr",
+        "source_sha256": "82ea7a3369c4951d7a443448bb324f6aea83279748a7d1c5cc246a0645364acf",
+        "physical_placements": 24,
+        "structural_review": "required: verify joint roles, parent support, restraint, seating and assembly order"
+      },
+      {
+        "id": "submodel-007af3763288ad54fd55decb",
+        "model": "42096-1.mpd",
+        "section": "42096 - chassis4.ldr",
+        "source_sha256": "b46f517b5db19b229f99969818210b1daddcc7dbddc781e96cbc7138ca7054d8",
+        "physical_placements": 21,
+        "structural_review": "required: verify joint roles, parent support, restraint, seating and assembly order"
+      },
+      {
+        "id": "submodel-ca4b1322aa009d9fdb37cb92",
+        "model": "42125-1.mpd",
+        "section": "42125 - chassisfront2.ldr",
+        "source_sha256": "764317e5e13288247ea141bc254613d6dfbb4aa395a392c42dbba62b63666632",
+        "physical_placements": 21,
+        "structural_review": "required: verify joint roles, parent support, restraint, seating and assembly order"
+      },
+      {
+        "id": "submodel-2ebd4dee518c89afb8c14c64",
+        "model": "42129-1.mpd",
+        "section": "42129 - hframe.ldr",
+        "source_sha256": "57bdc04c50285478637fae0a685697a21b4812172c09c3654c1ab5f788afacae",
+        "physical_placements": 33,
+        "structural_review": "required: verify joint roles, parent support, restraint, seating and assembly order"
+      }
+    ]
+  },
+  "physical_validity": "not_proven"
+}

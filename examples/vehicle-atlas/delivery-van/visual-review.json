@@ -1,0 +1,19 @@
+{
+  "source_sha256": "9b784b4d1ca70e9ef63b769b1a48d0232935f44db32a689f2926559304d1fbad",
+  "reviewed": "2026-09-24",
+  "status": "images_opened_and_reviewed",
+  "opened_images": [
+    "home.png",
+    "front.png",
+    "back.png",
+    "right.png",
+    "top.png",
+    "bottom.png"
+  ],
+  "review_method": "Opened final six-view contact sheet; detail/home and revision views also inspected where needed.",
+  "findings_and_revisions": [
+    "Short bonnet, upright cab and a taller quiet cargo box with a restrained belt line."
+  ],
+  "physical_validity": "not_proven",
+  "review_notes": "../visual-review.md"
+}

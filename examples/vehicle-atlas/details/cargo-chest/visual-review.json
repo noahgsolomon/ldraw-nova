@@ -1,0 +1,19 @@
+{
+  "source_sha256": "b4ebddb4df3d448f61b1c0201824404a2d1de6c14e59710eadb8716876512006",
+  "reviewed": "2026-09-24",
+  "status": "images_opened_and_reviewed",
+  "opened_images": [
+    "home.png",
+    "front.png",
+    "back.png",
+    "right.png",
+    "top.png",
+    "bottom.png"
+  ],
+  "review_method": "Opened final six-view contact sheet; detail/home and revision views also inspected where needed.",
+  "findings_and_revisions": [
+    "Purpose-made open cargo chest with moulded handles, mounted on a three-by-four stud pallet."
+  ],
+  "physical_validity": "not_proven",
+  "review_notes": "../../visual-review.md"
+}

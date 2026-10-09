@@ -1,0 +1,30 @@
+{
+  "source_sha256": "ac0c7b6eb90a7f4f60cfa8125969ba91fdfc1c394d5227d24c2f479ee94cf1b4",
+  "profile": "watercraft",
+  "checks_passed": true,
+  "physical_validity": "not_proven",
+  "diagnostics": [],
+  "family_parts": {
+    "hull": [
+      0
+    ],
+    "seat": [
+      3
+    ],
+    "helm": [
+      4
+    ]
+  },
+  "truncated": false,
+  "coverage": {
+    "geometry_complete": true,
+    "occurrences": 12,
+    "wheel_review": "not_applicable",
+    "interfaces": "Known atlas hull/cockpit inventory"
+  },
+  "limitations": [
+    "Profile covers the named atlas part families, not every boat or aircraft.",
+    "Run assembly geometry/contact checks and open renders; part presence and alignment alone do not prove attachment or clearance.",
+    "No buoyancy, seaworthiness, flight, balance, landing-gear, strength, minifigure fit or retail colour-availability claim."
+  ]
+}
