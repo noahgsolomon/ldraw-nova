@@ -35,6 +35,12 @@ The initial registry covers **34 definitions plus aliases**: common Technic bric
 
 Each entry fingerprints its expanded geometry. Changed or unreviewed definitions do not receive curated ports. Do not update a hash without measuring and reviewing the new part. Additional connector blocks, bent/flexible members, panels and hubs need interface curation before a strict structural contract can rely on them.
 
+The fork expands source-reference points in a fixed scalar arithmetic order so
+BLAS/CPU rounding differences do not invalidate an unchanged library. This
+reproduces the original reviewed hashes without rounding coordinates or changing
+the registry. Incomplete geometry never receives reviewed ports, even if its
+remaining points happen to match a recorded fingerprint.
+
 - Hole pitch is normally 20 LDU. Brick/plate body heights are 24/8. Two plates between studded Technic bricks produce a 40-LDU hole separation.
 - Three beam holes span 40 LDU between their end centres. Solid bounds are not nominal placement dimensions.
 - Sampled thick/thin beams are 20/10 LDU thick. Two thin layers can share a 20-LDU pin grip; one alone does not complete its retaining seat.
@@ -60,7 +66,7 @@ Insert pins into a supported member before bringing the closing member onto thei
 
 ## Check intended joints and restraint
 
-`technic check` defaults to 500 occurrences; select a module with `--section` or deliberately increase `--max-instances`. Occurrence indices and contracts belong to the same selection. Read coverage and warnings even when `checks_passed` is true.
+`technic check` defaults to 500 occurrences; select a module with `--section` or deliberately increase `--max-instances`. Occurrence indices and contracts belong to the same selection. Unreviewed Technic occurrences make `coverage.complete` and `checks_passed` false, including without a rigid contract. The diagnostic remains a warning in that exploratory mode; a rigid contract makes it an error. `complete` separately describes source inspection, not interface coverage. Read other warnings even when `checks_passed` is true: insertion paths, declared mounts and physical strength still need review.
 
 A [structure contract](../../ldraw_tools/data/structure.schema.json) is a separate JSON file:
 

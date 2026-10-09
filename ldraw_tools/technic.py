@@ -46,6 +46,8 @@ def canonical(code):
 
 def definition(local):
     """Return a reviewed definition only for its exact expanded geometry."""
+    if not local.complete:
+        return None
     code = canonical(local.code)
     entry = registry()['parts'].get(code)
     if entry is None:

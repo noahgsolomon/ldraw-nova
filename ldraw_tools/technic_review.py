@@ -187,9 +187,11 @@ def review_inspection(inspection, *, contract=None, seating_only=False):
         issue('technic.mounts_undeclared', 'No required mounting pairs supplied; partial attachment can still connect the whole graph.')
     if not members:
         issue('technic.no_structural_members', 'No reviewed structural members were found.')
-    return dict(scope='technic-structure', checks_passed=inspection.complete and not any(d['severity']=='error' for d in diagnostics),
+    coverage_complete = inspection.complete and not unknown
+    return dict(scope='technic-structure', checks_passed=coverage_complete and not any(d['severity']=='error' for d in diagnostics),
         complete=inspection.complete, physical_validity='not_proven', occurrence_count=len(items),
-        coverage=dict(reviewed_occurrences=sum(v is not None for v in definitions.values()),
+        coverage=dict(complete=coverage_complete,
+                      reviewed_occurrences=sum(v is not None for v in definitions.values()),
                       unknown_technic=unknown, required_joints=len(contract.get('required_joints', [])),
                       assembly_constraints=len(contract.get('assembly', [])),
                       insertion_paths='manual_review_required', material_collisions='interface_seating_only'),
