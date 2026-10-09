@@ -39,7 +39,12 @@ repair; a successful command is **not** evidence that its model is buildable.
 
 The image includes an immutable public-data FTS cache seed. Before author code
 runs, the unprivileged container copies it into its own writable cache tmpfs;
-only links to the read-only official LDraw tree are preserved. The per-process
+only links to the read-only official LDraw tree are preserved. During image
+construction, the copied official top-level DAT timestamps and generated part
+index timestamp are normalized to whole seconds before their cache signatures
+are recorded. This keeps the seed reusable after Docker image export/import
+without changing library contents, modes or native runtime cache invalidation.
+The per-process
 file-size ceiling is 128 MiB so Nova can use its approximately 93 MiB search
 index. Workspace files remain limited to 8 MiB at both transfer boundaries; the
 workspace and cache tmpfs limits independently bound disk-like allocations.
