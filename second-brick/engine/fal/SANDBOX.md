@@ -20,7 +20,7 @@ controller, account `/data`, service sockets and parent processes are not visibl
 Writable storage is tmpfs: 64 MiB for the workspace and 128 MiB each for the
 temporary directory and seeded cache. Preserve the seed's public-library
 symlinks when copying it. Each command has a 120-second execution deadline,
-64 KiB output cap, 128-process UID limit, 1 GiB per-process address-space limit,
+64 KiB output cap, 128-process UID limit, 4 GiB per-process address-space limit,
 128 MiB per-file limit and 256-file-descriptor limit. The whole fal CPU machine
 supplies the aggregate memory/CPU bound; this is not Docker's former separate
 1 GiB command cgroup. Detached descendants are killed before exporting results.

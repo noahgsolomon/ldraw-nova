@@ -98,7 +98,10 @@ def sandbox_command(*, gpu=False):
     args = ["setpriv", "--reuid=65532", "--regid=65532", "--clear-groups",
             "prlimit", "--cpu=120", "--fsize=134217728", "--nofile=256", "--nproc=128", "--core=0"]
     if not gpu:
-        args.append("--as=1073741824")
+        # Mesa reserves substantially more virtual address space than its RSS.
+        # A 1 GiB address-space cap is not equivalent to Docker's 1 GiB memory
+        # cgroup and prevents rendering on four-core CPU runners.
+        args.append("--as=4294967296")
     # fal's network implementation cannot configure a fresh loopback device.
     # Retain the network namespace but deny non-Unix sockets with inherited
     # seccomp before starting any author program. No network FD is inherited.
@@ -107,7 +110,8 @@ def sandbox_command(*, gpu=False):
     for path in ["/usr", "/bin", "/sbin", "/lib", "/lib64", "/opt/nova", "/opt/ldraw", "/opt/nova-cache-seed"]:
         if Path(path).exists():
             args += ["--ro-bind", path, path]
-    for path in ["/etc/fonts", "/etc/ld.so.cache", "/etc/ld.so.conf", "/etc/ld.so.conf.d"]:
+    for path in ["/etc/fonts", "/etc/alternatives", "/etc/passwd", "/etc/group",
+                 "/etc/ld.so.cache", "/etc/ld.so.conf", "/etc/ld.so.conf.d"]:
         if Path(path).exists():
             args += ["--ro-bind", path, path]
     args += ["--ro-bind", str(Path(__file__).resolve()), "/opt/fal-worker/sandbox.py",
@@ -125,6 +129,7 @@ def sandbox_command(*, gpu=False):
            "PYTHONPATH": "/opt/nova", "PYTHONNOUSERSITE": "1", "PYTHONDONTWRITEBYTECODE": "1",
            "LDRAW_DIR": "/opt/ldraw", "QT_QPA_PLATFORM": "xcb", "LIBGL_ALWAYS_SOFTWARE": "0" if gpu else "1",
            "XDG_CACHE_HOME": "/tmp/cache", "LANG": "C.UTF-8", "OMP_NUM_THREADS": "2",
+           "XDG_RUNTIME_DIR": "/tmp/runtime", "QT_X11_NO_MITSHM": "1",
            "OPENBLAS_NUM_THREADS": "2", "MKL_NUM_THREADS": "2", "LP_NUM_THREADS": "2"}
     for key, value in env.items():
         args += ["--setenv", key, value]
@@ -192,6 +197,8 @@ def inside():
     workspace = Path("/job")
     server.import_archive(io.BytesIO(unpack(payload["archive"])), workspace)
     shutil.copytree("/opt/nova-cache-seed", "/opt/nova/.cache", symlinks=True, dirs_exist_ok=True)
+    Path("/tmp/runtime").mkdir(mode=0o700)
+    Path("/tmp/.X11-unix").mkdir(mode=0o1777)
     restrict_network()
     if body["kind"] == "python":
         path = body.get("path", "")
